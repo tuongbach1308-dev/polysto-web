@@ -1,11 +1,14 @@
 'use client'
 
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function Error({ reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="container-page py-20 text-center">
-      <h1 className="text-2xl font-bold text-slate-800 mb-2">Đã xảy ra lỗi</h1>
-      <p className="text-slate-500 mb-6">Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.</p>
-      <button onClick={reset} className="btn-primary">Thử lại</button>
+    <div className="container" style={{ textAlign: 'center', padding: '60px 0', minHeight: 400 }}>
+      <div style={{ fontSize: '5rem', marginBottom: 20 }}>⚠️</div>
+      <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: 10 }}>Đã xảy ra lỗi</h1>
+      <p style={{ color: '#666', fontSize: '1.6rem', marginBottom: 30 }}>
+        Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.
+      </p>
+      <button onClick={reset} className="btn-primary-custom">Thử lại</button>
     </div>
   )
 }

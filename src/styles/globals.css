@@ -3063,3 +3063,33 @@ footer.footer { clear: both; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
   border-top: 1px solid #ebebeb;
   margin-top: 6px;
 }
+
+/* ============================================================
+   36. STORE LOCATOR + MISC PAGES
+   ============================================================ */
+.store-card {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 12px;
+  padding: 20px;
+  transition: box-shadow 0.3s ease;
+}
+.store-card:hover { box-shadow: var(--shadow-card-hover); }
+
+.store-card-inner {
+  display: flex;
+  gap: 20px;
+}
+.store-card-image {
+  width: 300px;
+  height: 200px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.store-card-info { flex: 1; min-width: 0; }
+
+@media (max-width: 767px) {
+  .store-card-inner { flex-direction: column; }
+  .store-card-image { width: 100%; height: 180px; }
+}
