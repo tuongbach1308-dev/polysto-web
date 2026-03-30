@@ -1553,3 +1553,140 @@ footer.footer { clear: both; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
     bottom: calc(20px + var(--bottom-nav-h));
   }
 }
+
+/* ============================================================
+   23. HERO SLIDER (section_slider — Match XML)
+   ============================================================ */
+.section_slider {
+  width: 100%;
+  position: relative;
+}
+.section_slider .swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #fff;
+}
+.section_slider .slide-content-wrapper {
+  max-width: var(--container-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--container-padding-xl);
+}
+@media (max-width: 1024px) {
+  .section_slider .slide-content-wrapper { padding: 0; }
+}
+.section_slider .slide-content-wrapper img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.section_slider .slide-content-wrapper img:hover {
+  transform: scale(1.03);
+}
+
+/* Slider nav arrows — CIRCULAR (khác section arrows) */
+.section_slider .swiper-button-next,
+.section_slider .swiper-button-prev {
+  width: 40px !important;
+  height: 40px !important;
+  background: rgba(0,0,0,0.4) !important;
+  border-radius: 50% !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  margin-top: 0 !important;
+  transform: translateY(-50%);
+}
+.section_slider:hover .swiper-button-next,
+.section_slider:hover .swiper-button-prev {
+  opacity: 0.9;
+}
+.section_slider .swiper-button-next:hover,
+.section_slider .swiper-button-prev:hover {
+  background: rgba(0,0,0,0.7) !important;
+}
+.section_slider .swiper-button-next::after,
+.section_slider .swiper-button-prev::after {
+  font-size: 18px !important;
+  color: #fff;
+}
+.section_slider .swiper-button-prev {
+  left: max(20px, calc(50% - var(--container-max-width) / 2 + 25px));
+}
+.section_slider .swiper-button-next {
+  right: max(20px, calc(50% - var(--container-max-width) / 2 + 25px));
+}
+@media (max-width: 991px) {
+  .section_slider .slide-content-wrapper {
+    max-width: 100%;
+    padding: 0;
+  }
+}
+@media (max-width: 767px) {
+  .section_slider .swiper-button-next,
+  .section_slider .swiper-button-prev { display: none !important; }
+}
+
+/* Responsive image toggle for mobile banner */
+@media (min-width: 768px) {
+  .md-hidden-img { display: none !important; }
+}
+@media (max-width: 767px) {
+  .sm-hidden-img { display: none !important; }
+  .md-hidden-img { display: block !important; }
+}
+
+/* ============================================================
+   24. SUB-BANNERS (section_3_banner — Match XML)
+   ============================================================ */
+.small_banners_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+.three_banner {
+  width: 100%;
+}
+.banner_large_wrapper .three_banner {
+  height: 100%;
+}
+.small_banners_wrapper .three_banner {
+  flex: 1;
+}
+.three_banner a {
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  width: 100%;
+}
+.three_banner a:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),
+              0 4px 6px -2px rgba(0,0,0,0.05);
+}
+.three_banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Desktop: 8/12 + 4/12 columns */
+@media (min-width: 992px) {
+  .banner_large_wrapper { width: 66.666% !important; flex: 0 0 66.666% !important; }
+  .banner_small_col { width: 33.333% !important; flex: 0 0 33.333% !important; }
+}
+
+/* Mobile: 2 nhỏ nằm ngang */
+@media (max-width: 991px) {
+  .small_banners_wrapper { flex-direction: row; }
+  .banner_large_wrapper .three_banner { padding-bottom: 20px; }
+}
