@@ -2,6 +2,7 @@ import { createServerClient } from './server'
 
 export interface CatalogCategory {
   id: string; name: string; slug: string; description?: string; image_url?: string
+  parent_id?: string; icon_url?: string; show_on_homepage?: boolean
   sort_order: number; is_active: boolean; meta_title?: string; meta_description?: string
 }
 
@@ -42,4 +43,19 @@ export async function getCategoryBySlug(slug: string) {
   const supabase = createServerClient()
   const { data } = await supabase.from('web_catalog_categories').select('*').eq('slug', slug).eq('is_active', true).single()
   return data as CatalogCategory | null
+}
+
+export async function getCategoriesHierarchical() {
+  const supabase = createServerClient()
+  const { data } = await supabase
+    .from('web_catalog_categories')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order')
+  const all = (data || []) as CatalogCategory[]
+  const roots = all.filter(c => !c.parent_id)
+  return roots.map(root => ({
+    ...root,
+    children: all.filter(c => c.parent_id === root.id),
+  }))
 }
