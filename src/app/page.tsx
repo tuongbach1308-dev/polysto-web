@@ -1,140 +1,54 @@
-import { getBanners } from '@/lib/supabase/banners'
-import { getCatalogProducts, getCategoriesHierarchical } from '@/lib/supabase/catalog'
-import { getShopProducts } from '@/lib/supabase/shop'
-import { getPosts } from '@/lib/supabase/posts'
-import { getSettings } from '@/lib/supabase/settings'
-import {
-  getHomepageSections,
-  getFeatures,
-  getCustomerGallery,
-} from '@/lib/supabase/homepage'
-
-import { HeroSlider } from '@/components/home/HeroSlider'
-import { SubBanners } from '@/components/home/SubBanners'
-import { CategoryStrip } from '@/components/home/CategoryStrip'
-import { CategorySection } from '@/components/home/CategorySection'
-import { ShopSection } from '@/components/home/ShopSection'
-import { FeaturesStrip } from '@/components/home/FeaturesStrip'
-import { BlogSection } from '@/components/home/BlogSection'
-import { CustomerGallery } from '@/components/home/CustomerGallery'
-
-export const revalidate = 60
-
-export default async function HomePage() {
-  const [
-    settings,
-    sections,
-    heroBanners,
-    subBanners,
-    categories,
-    features,
-    shopProducts,
-    latestPosts,
-    gallery,
-  ] = await Promise.all([
-    getSettings(),
-    getHomepageSections(),
-    getBanners('hero'),
-    getBanners('sub_banner'),
-    getCategoriesHierarchical(),
-    getFeatures(),
-    getShopProducts({ featured: true, limit: 10 }),
-    getPosts({ limit: 8 }),
-    getCustomerGallery(),
-  ])
-
-  // Pre-fetch products for each category_products section
-  const categorySections = sections.filter(s => s.section_type === 'category_products')
-  const categoryProductsMap: Record<string, Awaited<ReturnType<typeof getCatalogProducts>>> = {}
-
-  await Promise.all(
-    categorySections.map(async (sec) => {
-      const catId = sec.config.category_id || sec.category_id
-      if (catId) {
-        categoryProductsMap[catId] = await getCatalogProducts({
-          categoryId: catId,
-          limit: sec.config.items_count || 10,
-        })
-      }
-    })
-  )
-
-  // Homepage categories for the strip (show_on_homepage)
-  const homepageCategories = categories.filter((c: any) => c.show_on_homepage !== false)
-
+// Trang test đơn giản để xác nhận design tokens hoạt động đúng
+export default function HomePage() {
   return (
-    <div className="homepage">
-      {/* Render sections in DB order */}
-      {sections.map((section) => {
-        switch (section.section_type) {
-          case 'hero_banner':
-            return (
-              <div key={section.id} className="poly-container mt-[12px] md:mt-[15px]">
-                <HeroSlider banners={heroBanners} settings={settings} />
-              </div>
-            )
+    <div className="container py-10">
+      <h1 className="text-3xl font-bold mb-4">Design Tokens Test</h1>
 
-          case 'sub_banners':
-            return <SubBanners key={section.id} banners={subBanners} />
+      {/* Colors */}
+      <div className="flex gap-4 mb-8 flex-wrap">
+        <div className="w-20 h-20 bg-main rounded-card flex items-center justify-center text-white text-sm">main</div>
+        <div className="w-20 h-20 bg-dark rounded-card flex items-center justify-center text-white text-sm">dark</div>
+        <div className="w-20 h-20 bg-price rounded-card flex items-center justify-center text-white text-sm">price</div>
+        <div className="w-20 h-20 bg-surface rounded-card flex items-center justify-center text-sm">surface</div>
+        <div className="w-20 h-20 bg-dark-soft rounded-card flex items-center justify-center text-white text-sm">footer</div>
+      </div>
 
-          case 'category_strip':
-            return <CategoryStrip key={section.id} categories={homepageCategories} />
+      {/* Typography */}
+      <div className="mb-8 space-y-2">
+        <p className="text-product-name font-bold">Product name (16px bold)</p>
+        <p className="text-price font-bold text-price">18.990.000đ (18px bold red)</p>
+        <p className="text-sm text-price-old line-through">22.990.000đ (13px strikethrough)</p>
+        <p className="text-section-title font-bold">Section Title (20px bold)</p>
+        <p className="text-nav font-semibold text-white bg-dark-header p-2 inline-block">Nav item (16px 600)</p>
+      </div>
 
-          case 'features':
-            return <FeaturesStrip key={section.id} features={features} />
+      {/* Shadows */}
+      <div className="flex gap-8 mb-8">
+        <div className="w-40 h-40 bg-white shadow-card rounded-card p-4 text-sm">shadow-card</div>
+        <div className="w-40 h-40 bg-white shadow-card-hover rounded-card p-4 text-sm">shadow-card-hover</div>
+        <div className="w-40 h-40 bg-white shadow-blog rounded-section p-4 text-sm">shadow-blog</div>
+      </div>
 
-          case 'category_products': {
-            const catId = section.config.category_id || section.category_id
-            if (!catId) return null
-            const cat = categories.find((c: any) => c.id === catId)
-            if (!cat) return null
-            const products = categoryProductsMap[catId] || []
-            return (
-              <CategorySection
-                key={section.id}
-                category={cat}
-                products={products}
-                showSubTabs={section.config.show_sub_tabs !== false}
-                showViewAll={section.config.show_view_all !== false}
-                layout={section.config.layout || 'grid-4'}
-                itemsCount={section.config.items_count || 10}
-              />
-            )
-          }
+      {/* Container width check */}
+      <div className="bg-surface-promo p-4 rounded-section mb-8">
+        <p className="text-sm text-text-secondary">
+          Container max-width: 1349px (xl padding 45px).
+          Resize browser to check breakpoints: sm:576 md:768 lg:992 xl:1200
+        </p>
+      </div>
 
-          case 'blog_posts':
-            return <BlogSection key={section.id} posts={latestPosts} title={section.title || undefined} />
+      {/* Banner effect test */}
+      <div className="banner-effect w-60 h-40 bg-dark rounded-section mb-8 flex items-center justify-center text-white">
+        Hover for shine effect
+      </div>
 
-          case 'customer_gallery':
-            return <CustomerGallery key={section.id} items={gallery} title={section.title || undefined} />
-
-          case 'custom_html':
-            if (!section.config.custom_html) return null
-            return (
-              <section key={section.id} className="py-[15px]">
-                <div className="poly-container" dangerouslySetInnerHTML={{ __html: section.config.custom_html }} />
-              </section>
-            )
-
-          default:
-            return null
-        }
-      })}
-
-      {/* Fallback: if no sections configured, show default layout */}
-      {sections.length === 0 && (
-        <>
-          <div className="poly-container mt-[12px] md:mt-[15px]">
-            <HeroSlider banners={heroBanners} settings={settings} />
-          </div>
-          <SubBanners banners={subBanners} />
-          <CategoryStrip categories={homepageCategories} />
-          <FeaturesStrip features={features} />
-          {shopProducts.length > 0 && <ShopSection products={shopProducts} />}
-          <BlogSection posts={latestPosts} />
-          <CustomerGallery items={gallery} />
-        </>
-      )}
+      {/* View more button test */}
+      <div className="view-more">
+        <a href="#">
+          Xem tất cả
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </div>
     </div>
   )
 }

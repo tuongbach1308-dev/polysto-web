@@ -2,257 +2,221 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Google Font: Nunito ── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+/* ============================================================
+   1. CSS CUSTOM PROPERTIES
+   ============================================================ */
+:root {
+  /* Brand */
+  --color-main: #7bb842;
+  --color-dark: #141414;
+  --color-header: #111;
+  --color-price: #f83015;
+  --color-price-old: #9aa5b3;
 
-/* ══════════════════════════════════════════════════════════════
-   POLY Store Design Tokens — extracted from polystorevn.com XML
-   ══════════════════════════════════════════════════════════════ */
+  /* Surfaces */
+  --color-bg: #fff;
+  --color-surface: #f8f8f8;
+  --color-surface-promo: #f1f1f1;
+  --color-surface-content: #F7F7F7;
 
-@layer base {
-  /* Root uses 62.5% trick: 1rem = 10px for easier rem calculation */
-  html {
-    font-size: 62.5%;
-    scroll-behavior: smooth;
-    -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
-  }
+  /* Text */
+  --color-text: #333;
+  --color-text-secondary: #656565;
+  --color-text-muted: #484848;
 
-  body {
-    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-                 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    font-size: 1.6rem;
-    line-height: 1.7;
-    color: #333;
-    background-color: #fff;
-    margin: 0;
-    padding: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+  /* Borders */
+  --color-border: #ebebeb;
+  --color-border-light: #e5e5e5;
 
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: 500;
-    line-height: 1.4;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-  }
+  /* Footer */
+  --color-footer: #222;
+  --color-footer-copyright: #101010;
 
-  a {
-    color: #333;
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-  a:hover {
-    color: #7bb842;
-  }
+  /* Cart */
+  --color-cart-price: #7bb842;
+  --color-cart-badge: #15b41f;
 
-  img {
-    max-width: 100%;
-    height: auto;
-    vertical-align: middle;
-    border-style: none;
+  /* Shadows */
+  --shadow-card: 0 0 6px 0 rgba(50,50,93,0.15), 1px 1px 5px rgba(0,0,0,0.05);
+  --shadow-card-hover: rgba(60,64,67,0.1) 0 1px 2px 0, rgba(60,64,67,0.15) 0 2px 6px 2px;
+
+  /* Container */
+  --container-padding: 14px;
+  --container-padding-xl: 45px;
+  --container-max-width: 1349px;
+
+  /* Grid */
+  --gutter: 10px;
+  --gutter-mobile: 7px;
+
+  /* Gradients */
+  --gradient-flash-sale: linear-gradient(180deg, #3a591d 0%, #457c12 50%, #7bb842 100%);
+  --gradient-badge-red: linear-gradient(180deg, #f64343 0%, #dd0e0e 50%, #a30808 100%);
+  --gradient-category-hover: linear-gradient(31deg, #1d1d1f 0%, #7d7d88 100%);
+
+  /* Admin overridable — inject từ web_settings */
+  --theme-primary: #7bb842;
+  --theme-font-heading: 'Nunito', sans-serif;
+  --theme-font-body: 'Nunito', sans-serif;
+  --theme-border-radius: 8px;
+}
+
+/* ============================================================
+   2. BASE RESET (Match XML gốc)
+   ============================================================ */
+html {
+  font-size: 62.5%; /* 1rem = 10px — QUAN TRỌNG: match website gốc */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  padding: 0 !important;
+  margin: 0;
+}
+
+body {
+  font-size: 1.6rem; /* = 16px */
+  line-height: 1.7;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+*, ::after, ::before {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+a {
+  color: var(--color-text);
+  text-decoration: none;
+  background-color: transparent;
+}
+a:hover {
+  color: var(--color-main);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+img {
+  vertical-align: middle;
+  border-style: none;
+  max-width: 100%;
+  height: auto;
+}
+
+ul {
+  list-style: none;
+  margin-bottom: 0;
+  padding-left: 0;
+}
+
+p {
+  margin: 0 0 15px 0;
+}
+
+button, input, optgroup, select, textarea {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button:focus, input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ============================================================
+   3. CONTAINER (Match XML: không dùng Tailwind default container)
+   ============================================================ */
+.container {
+  width: 100%;
+  max-width: 100%;
+  padding-right: var(--container-padding);
+  padding-left: var(--container-padding);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 1200px) {
+  .container {
+    padding-right: var(--container-padding-xl);
+    padding-left: var(--container-padding-xl);
+    max-width: var(--container-max-width);
   }
 }
 
-/* ── Container ── */
-@layer components {
-  .poly-container {
-    width: 100%;
-    max-width: 100%;
-    padding-left: 14px;
-    padding-right: 14px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  @media (min-width: 1200px) {
-    .poly-container {
-      padding-left: 45px;
-      padding-right: 45px;
-      max-width: 1349px;
-    }
-  }
+/* ============================================================
+   4. GRID OVERRIDES (Match XML gutter system)
+   ============================================================ */
+.row-custom {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: calc(var(--gutter) * -1);
+  margin-left: calc(var(--gutter) * -1);
+}
 
-  /* ── Row / Grid gutter matching Blogger template ── */
-  .poly-row {
-    display: flex;
-    flex-wrap: wrap;
-    margin-left: -10px;
-    margin-right: -10px;
-  }
-  .poly-row > * {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-  @media (max-width: 480px) {
-    .poly-row {
-      margin-left: -7px;
-      margin-right: -7px;
-    }
-    .poly-row > * {
-      padding-left: 7px;
-      padding-right: 7px;
-    }
-  }
+.row-custom > * {
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
 
-  /* ── Buttons ── */
-  .btn-brand {
-    @apply inline-flex items-center justify-center gap-2;
-    background-color: #141414;
-    color: #fff;
-    font-weight: 600;
-    padding: 0 25px;
-    height: 40px;
-    line-height: 40px;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
-    border: 1px solid #141414;
+@media (max-width: 480px) {
+  .row-custom {
+    margin-right: -14px;
+    margin-left: -14px;
+    padding-left: var(--gutter-mobile);
+    padding-right: var(--gutter-mobile);
   }
-  .btn-brand:hover {
-    background-color: #7bb842;
-    border-color: #7bb842;
-    color: #fff;
-  }
-
-  .btn-outline {
-    @apply inline-flex items-center justify-center gap-2;
-    border: 1px solid #141414;
-    color: #141414;
-    font-weight: 500;
-    background: #fff;
-    padding: 0 25px;
-    height: 40px;
-    line-height: 40px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-  }
-  .btn-outline:hover {
-    border-color: #7bb842;
-    background: #7bb842;
-    color: #fff;
-  }
-
-  /* ── Card (Product) ── */
-  .product-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 10px;
-    height: 100%;
-    overflow: hidden;
-    box-shadow: 0 0 6px 0 rgba(50,50,93,0.15), 1px 1px 5px rgba(0,0,0,0.05);
-    transition: box-shadow 0.3s ease;
-  }
-  @media (max-width: 480px) {
-    .product-card { padding: 7px; }
-  }
-  @media (min-width: 1200px) {
-    .product-card:hover {
-      box-shadow: rgba(60,64,67,0.1) 0 1px 2px 0, rgba(60,64,67,0.15) 0 2px 6px 2px;
-    }
-  }
-
-  /* ── Section title (glass morphism on desktop) ── */
-  .section-title {
-    text-align: center;
-    position: relative;
-    margin-bottom: 20px;
-  }
-  .section-title h2 {
-    display: inline-block;
-    font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 0;
-  }
-  @media (max-width: 767px) {
-    .section-title h2 { font-size: 2rem; }
-  }
-  @media (min-width: 992px) {
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 15px 25px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    }
-    .section-title h2 {
-      font-size: 24px;
-      margin: 0;
-    }
-  }
-
-  /* ── Line clamp ── */
-  .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-  /* ── Price styles ── */
-  .price-sale {
-    color: #f83015;
-    font-weight: 700;
-    font-size: 1.8rem;
-    line-height: 1;
-  }
-  .price-old {
-    color: #9aa5b3;
-    font-size: 1.3rem;
-    text-decoration: line-through;
-    line-height: 1;
-  }
-
-  /* ── Flash sale badge ── */
-  .badge-sale {
-    display: inline-block;
-    position: absolute;
-    top: 5px;
-    left: -8px;
-    padding: 1px 10px;
-    background: linear-gradient(180deg, #64a01d 0%, #64a01d 100%);
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #fff;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
-    border-top-left-radius: 8px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.25);
-    box-shadow: rgba(60,64,67,0.1) 0 1px 0 0, rgba(60,64,67,0.15) 0 2px 3px 2px;
-    z-index: 1;
-  }
-  .badge-sale::after {
-    content: '';
-    display: block;
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    border-top: 4px solid #218109;
-    border-left: 7px solid transparent;
-  }
-
-  /* ── Prose for content pages ── */
-  .prose-poly {
-    @apply prose prose-slate max-w-none;
-    @apply prose-headings:font-bold prose-a:text-brand prose-img:rounded-section;
+  .row-custom > * {
+    padding-left: var(--gutter-mobile);
+    padding-right: var(--gutter-mobile);
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   UTILITY OVERRIDES & ANIMATIONS
-   ══════════════════════════════════════════════════════ */
+/* ============================================================
+   5. LINE CLAMP UTILITIES (Match XML)
+   ============================================================ */
+.line-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 !important;
+  line-height: 1.4 !important;
+}
 
-/* Hide scrollbar for carousels */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.line-clamp-1 { -webkit-line-clamp: 1; }
+.line-clamp-2 { -webkit-line-clamp: 2; }
+.line-clamp-3 { -webkit-line-clamp: 3; }
 
-/* Banner hover shine effect */
-.banner-shine {
+.line-clamp-2-new {
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+/* ============================================================
+   6. BANNER HOVER EFFECT (Shine animation — match XML)
+   ============================================================ */
+.banner-effect {
   position: relative;
   overflow: hidden;
+  display: block;
 }
-.banner-shine::before {
+
+.banner-effect::before {
   position: absolute;
   top: 0;
   left: -100%;
@@ -261,95 +225,184 @@
   content: '';
   width: 50%;
   height: 100%;
-  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 100%);
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
   transform: skewX(-25deg);
 }
-.banner-shine:hover::before {
-  animation: shine 1.1s ease;
+
+.banner-effect:hover::before {
+  animation: shine 1.1s;
 }
 
-/* Product action buttons reveal on card hover */
-@media (min-width: 1200px) {
-  .product-card .action-btn {
-    opacity: 0;
-    transform: translateX(10px);
-    transition: all 0.2s cubic-bezier(0.28, 0.12, 0.22, 1);
-    will-change: opacity, transform;
-  }
-  .product-card:hover .action-btn {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-  }
-  .product-card:hover .action-btn:nth-child(1) { transition-delay: 0s; }
-  .product-card:hover .action-btn:nth-child(2) { transition-delay: 0.05s; }
-  .product-card:hover .action-btn:nth-child(3) { transition-delay: 0.08s; }
-
-  /* Product image zoom on hover */
-  .product-card:hover .product-thumb img {
-    transform: scale(1.03);
-  }
+/* ============================================================
+   7. RESPONSIVE VISIBILITY (Match XML)
+   ============================================================ */
+@media (min-width: 992px) {
+  .md-hidden { display: none !important; }
 }
-
-.product-thumb img {
-  transition: transform 0.3s ease;
-}
-
-/* Category item hover */
-.cate-item-hover:hover {
-  background: linear-gradient(31deg, #1d1d1f 0%, #7d7d88 100%);
-}
-.cate-item-hover:hover .cate-name {
-  color: #fff;
-}
-.cate-item-hover:hover .cate-image img {
-  transform: scale(1.05);
-}
-
-/* Mobile bottom sheet menu */
-.bottom-sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  max-height: 75vh;
-  z-index: 1100;
-  transform: translateY(100%);
-  visibility: hidden;
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.4s ease;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
-}
-.bottom-sheet.open {
-  visibility: visible;
-  transform: translateY(0);
-}
-
-/* Cart sidebar */
-.cart-sidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 340px;
-  background: #fff;
-  z-index: 9999;
-  transform: translateX(100%);
-  visibility: hidden;
-  transition: transform 0.5s cubic-bezier(0.645, 0.045, 0.355, 1),
-              visibility 0.5s cubic-bezier(0.645, 0.045, 0.355, 1);
-  box-shadow: none;
-}
-.cart-sidebar.open {
-  visibility: visible;
-  transform: translateX(0);
+@media (max-width: 991px) {
+  .sm-hidden { display: none !important; }
 }
 @media (max-width: 767px) {
-  .cart-sidebar { width: 100%; }
+  .hidden-xs { display: none !important; }
 }
 
-/* Back to top */
+/* ============================================================
+   8. LAZY LOAD (Match XML transition)
+   ============================================================ */
+.lazyload {
+  background: #ebebeb;
+}
+.lazyload.loaded {
+  background: transparent;
+}
+img.lazyload:not(.loaded) {
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0.2;
+}
+
+/* Scale hover for product images */
+.scale_hover img {
+  transition: transform 0.3s ease;
+}
+.scale_hover:hover img {
+  transform: scale(1.03);
+}
+
+/* ============================================================
+   9. SWIPER OVERRIDES (Match XML exact values)
+   ============================================================ */
+
+/* Pagination dots */
+.swiper-pagination-bullet {
+  box-shadow: none;
+  outline: 0;
+  width: 12px !important;
+  height: 12px !important;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 0;
+  opacity: 1;
+}
+.swiper-pagination-bullet-active {
+  transition: all 0.2s;
+  background: #333 !important;
+}
+
+/* Navigation arrows — shared base */
+.swiper-button-next,
+.swiper-button-prev {
+  font-size: 0;
+  line-height: 0;
+  display: flex;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0;
+  cursor: pointer;
+  color: #fff;
+  background: #141414 !important;
+  border: 1px solid #ddd;
+  outline: none;
+  z-index: 2;
+  opacity: 0;
+  transition: all 0.25s ease;
+  margin-top: 0 !important;
+}
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 1.6rem !important;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* Next arrow — right side, left-rounded */
+.swiper-button-next {
+  right: -35px;
+  border-right: 0;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  transform: translate(32px, -50%);
+}
+
+/* Prev arrow — left side, right-rounded */
+.swiper-button-prev {
+  left: -35px;
+  border-left: 0;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  transform: translate(-32px, -50%);
+}
+
+/* Show arrows on container hover */
+.swiper:hover .swiper-button-next,
+.swiper-container:hover .swiper-button-next {
+  right: 0;
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(-50%);
+}
+.swiper:hover .swiper-button-prev,
+.swiper-container:hover .swiper-button-prev {
+  left: 0;
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+/* Disabled state */
+.swiper-button-disabled {
+  opacity: 0.35 !important;
+}
+
+/* Hide arrows on mobile */
+@media (max-width: 767px) {
+  .swiper-button-next,
+  .swiper-button-prev {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   10. ALERT / TOAST (Match XML)
+   ============================================================ */
+.alert {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 5px;
+}
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+.alert-danger  { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+
+#js-global-alert {
+  position: fixed;
+  top: 5%;
+  right: 15px;
+  width: 270px;
+  z-index: 9999;
+  padding: 10px;
+  opacity: 0;
+  display: none;
+}
+#js-global-alert.active {
+  display: block;
+  animation: alert-fade-in-up 0.3s ease-out forwards;
+}
+#js-global-alert.inactive {
+  animation: alert-fade-out 0.3s ease-out forwards;
+}
+
+/* ============================================================
+   11. BACK TO TOP (Match XML)
+   ============================================================ */
 .backtop {
   position: fixed;
   bottom: 100px;
@@ -357,189 +410,208 @@
   z-index: 99;
   width: 35px;
   height: 35px;
-  background: #26750b;
+  line-height: 35px;
+  text-align: center;
+  display: inline-block;
+  color: #fff;
   border-radius: 5px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
+  background: #26750b;
+  text-decoration: none;
+  transition: all 0.3s ease-out;
   transform: translateY(-20px);
-  transition: all 0.3s ease;
-}
-.backtop.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-.backtop:hover {
-  background: #a91b29;
-  color: #fff;
-}
-
-/* Flash sale gradient */
-.flash-sale-bg {
-  background: linear-gradient(180deg, #3a591d 0%, #457c12 50%, #7bb842 100%);
-}
-
-/* Tag badge gradient */
-.tag-badge {
-  background: linear-gradient(180deg, #f64343 0%, #dd0e0e 50%, #a30808 100%);
-}
-
-/* Floating widget pulse */
-.widget-pulse {
-  animation: zoomPulse 3s linear 0.2s infinite;
-}
-
-/* Promo box backgrounds */
-.promo-bg-1 { background-color: #EBF2FC; }
-.promo-bg-2 { background-color: #FAE9EF; }
-.promo-bg-3 { background-color: #FFFBDB; }
-.promo-bg-4 { background-color: #E9FFE3; }
-
-/* Tab underline animation */
-.tab-underline {
-  position: relative;
-}
-.tab-underline::before {
-  content: '';
-  height: 2px;
-  width: 0;
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  background: #141414;
-  transition: width 0.3s ease-in-out;
-}
-.tab-underline:hover::before,
-.tab-underline.active::before {
-  width: 100%;
-}
-
-/* Desktop header nav underline */
-.nav-underline {
-  position: relative;
-}
-.nav-underline::before {
-  content: '';
-  height: 2px;
-  width: 0;
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  transition: all 200ms linear;
-}
-.nav-underline:hover::before,
-.nav-underline.active::before {
-  width: 30px;
-}
-
-/* Overlay */
-.overlay-dark {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 1090;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s, visibility 0.3s;
 }
-.overlay-dark.open {
+.backtop:hover { background: #a91b29; color: #fff; }
+.backtop.show {
+  transform: translateY(0);
   opacity: 1;
   visibility: visible;
 }
 
-/* Breadcrumb separator */
-.breadcrumb-sep {
+/* ============================================================
+   12. BREADCRUMB (Match XML)
+   ============================================================ */
+.bread-crumb {
+  background: #fff;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 3px rgba(0, 0, 0, 0.1);
+}
+@media (max-width: 768px) {
+  .bread-crumb { margin-bottom: 15px; }
+}
+.breadcrumb {
+  margin: 0;
+  font-size: 14px;
+  padding: 10px 0;
+  border-radius: 0;
+  font-weight: 400;
+  line-height: 24px;
+  background-color: transparent;
+  width: 100%;
+  text-align: left;
+}
+.breadcrumb li { display: inline; }
+.breadcrumb li > a { color: #333; }
+.breadcrumb li a:hover,
+.breadcrumb li.active,
+.breadcrumb li strong {
+  color: var(--color-main);
+  font-weight: 400;
+  text-decoration: none;
+}
+.breadcrumb li .mr_lr {
   padding: 0 3px;
   color: #333;
 }
 
-/* Blog card */
-.blog-card {
-  box-shadow: 0 0 10px rgba(0,0,0,0.25);
-  border-radius: 12px;
-  overflow: hidden;
+/* ============================================================
+   13. SECTION INDEX (Match XML)
+   ============================================================ */
+.section-index {
+  padding: 25px 0 0 0;
 }
-
-/* Specs table striped */
-.specs-table tr:nth-child(odd) {
-  background-color: #F7F7F7;
-}
-.specs-table td {
-  border: 0;
-  padding: 6px 10px;
-  font-size: 1.4rem;
-  text-align: left;
-}
-.specs-table td:first-child {
-  width: 126px;
-}
-
-/* Footer accordion (mobile) */
-@media (max-width: 767px) {
-  .footer-toggle::before,
-  .footer-toggle::after {
-    position: absolute;
-    content: '';
-    top: 50%;
-    right: 0;
-    transform: translate(-50%, -50%) rotate(-90deg);
-    background-color: currentColor;
-    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-  }
-  .footer-toggle::before {
-    width: 11px;
-    height: 1.5px;
-    opacity: 1;
-  }
-  .footer-toggle::after {
-    width: 1.5px;
-    height: 11px;
-    right: 10px;
-  }
-  .footer-toggle.open::after {
-    transform: rotate(180deg);
-    right: 0;
-  }
-}
-
-/* Promotion content in product card */
-.promo-content-card {
-  background: #f1f1f1;
-  border-radius: 6px;
-  font-size: 1.3rem;
-  padding: 3px 5px;
-  margin-top: 8px;
-  min-height: 51px;
-  display: flex;
-  align-items: center;
-}
-.promo-content-card b,
-.promo-content-card strong {
-  color: #7bb842;
-}
-
-/* Product detail content expand */
-.content-expandable {
+.section-index .section-title {
+  text-align: center;
   position: relative;
+  margin-bottom: 20px;
 }
-.content-expandable.collapsed {
-  max-height: 775px;
-  overflow: hidden;
+.section-index .section-title h2 {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 2.0rem;
+  margin-bottom: 0;
 }
-.content-expandable.collapsed::after {
-  content: '';
-  display: block;
-  height: 55px;
-  margin-top: -55px;
-  background: linear-gradient(to bottom,
-    rgba(247,247,247,0) 0%,
-    rgba(247,247,247,0.91) 50%,
-    #f7f7f7 55%
-  );
+.section-index .section-title h2 span {
+  color: var(--color-main);
+}
+@media (max-width: 767px) {
+  .section-index .section-title h2 {
+    font-size: 2rem;
+  }
+}
+
+/* ============================================================
+   14. BUTTON STYLES (Match XML)
+   ============================================================ */
+.btn-primary-custom {
+  display: inline-block;
+  text-align: center;
+  line-height: 40px;
+  background: #141414;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.6rem;
+  font-weight: 600;
+  padding: 0 30px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.btn-primary-custom:hover {
+  background: var(--color-main);
+  color: #fff;
+}
+
+/* View more button (match XML) */
+.view-more {
+  margin-top: 15px;
+  text-align: center;
+}
+.view-more a {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: auto;
+  line-height: 40px;
+  height: auto;
+  border: 1px solid #141414;
+  color: #141414;
+  font-weight: 500;
+  background: #fff;
+  padding: 0 25px;
+  border-radius: 8px;
+  transition: background-color 0.5s ease;
+}
+.view-more a svg {
+  width: 18px;
+  height: 18px;
+  margin-left: 5px;
+}
+.view-more a:hover {
+  border: 1px solid var(--color-main);
+  background: var(--color-main);
+  color: #fff;
+}
+.view-more a:hover svg {
+  color: #fff;
+}
+
+/* ============================================================
+   15. BACKDROP OVERLAY (Match XML)
+   ============================================================ */
+.backdrop-overlay {
+  position: fixed;
+  opacity: 0;
+  width: 100%;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #363636;
+  z-index: 9999;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+.backdrop-overlay.active {
+  visibility: visible;
+  opacity: 0.5;
+}
+
+/* ============================================================
+   16. SCROLLBAR CUSTOM (Match XML)
+   ============================================================ */
+.custom-scrollbar::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  background-color: #F5F5F5;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  background-color: #F5F5F5;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  -webkit-box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.3);
+  background-color: #141414;
+}
+
+/* Hide scrollbar (for tabs, mobile scroll) */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* ============================================================
+   17. MOBILE BOTTOM NAV (Match XML)
+   ============================================================ */
+#mobile-bottom-nav-wrapper {
+  display: none;
+}
+@media (max-width: 991px) {
+  :root {
+    --bottom-nav-h: calc(8vh + env(safe-area-inset-bottom));
+  }
+  #mobile-bottom-nav-wrapper {
+    display: block;
+  }
+  body {
+    padding-bottom: var(--bottom-nav-h) !important;
+  }
 }
