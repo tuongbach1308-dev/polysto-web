@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { ZaloButton } from '@/components/layout/ZaloButton'
+import { FloatingWidget } from '@/components/layout/FloatingWidget'
+import { BackToTop } from '@/components/layout/BackToTop'
 import { LocalBusinessSchema } from '@/components/seo/JsonLd'
 import { getSettings } from '@/lib/supabase/settings'
 import '@/styles/globals.css'
@@ -50,7 +51,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
-        <ZaloButton />
+        <FloatingWidget settings={settings} />
+        <BackToTop />
       </body>
     </html>
   )
