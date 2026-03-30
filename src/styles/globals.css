@@ -1916,8 +1916,10 @@ footer.footer { clear: both; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
    27. PRODUCT CARD (item_product_main — Match XML)
    ============================================================ */
 .item_product_main {
-  margin-bottom: 10px;
+  display: block;
   height: 100%;
+  padding-bottom: 20px;
+  position: relative;
 }
 
 .product-action {
@@ -1927,49 +1929,18 @@ footer.footer { clear: both; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
   height: 100%;
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  transition: box-shadow 0.3s ease;
+  margin-bottom: 0;
   position: relative;
+  transition: box-shadow 0.3s ease;
 }
-@media (min-width: 1200px) {
-  .product-action:hover {
-    box-shadow: var(--shadow-card-hover);
-  }
-}
-
-/* Badge */
-.badge-sale-card {
-  display: inline-block;
-  position: absolute;
-  top: 5px;
-  left: -8px;
-  padding: 1px 10px;
-  background: linear-gradient(180deg, #64a01d 0%, #64a01d 100%);
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #fff;
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
-  border-top-left-radius: 8px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.25);
-  box-shadow: rgba(60,64,67,0.1) 0 1px 0 0, rgba(60,64,67,0.15) 0 2px 3px 2px;
-  z-index: 1;
-}
-.badge-sale-card::after {
-  content: '';
-  display: block;
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  border-top: 4px solid #218109;
-  border-left: 7px solid transparent;
-}
+@media (max-width: 480px) { .product-action { padding: 7px; } }
 
 /* Thumbnail */
 .product-thumbnail {
-  position: relative;
   width: 100%;
-  padding-bottom: 100%; /* Square aspect ratio */
-  margin-bottom: 8px;
+  aspect-ratio: 1;
+  position: relative;
+  margin-bottom: 12px;
 }
 .image_thumb {
   position: absolute;
@@ -1980,43 +1951,126 @@ footer.footer { clear: both; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
   border-radius: 8px;
   overflow: hidden;
 }
+.image_thumb img { transition: transform 0.3s ease; }
+
+/* Action buttons (slide in on hover) */
+.product-thumbnail .action-button {
+  position: absolute;
+  top: 50%;
+  transform: translate(0, -50%);
+  right: 10px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.action-button .btn-circle {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.2s cubic-bezier(0.28, 0.12, 0.22, 1);
+  will-change: opacity, transform;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Flash sale / sold out badge */
+.flash-sale {
+  padding: 1px 10px;
+  background-color: #64a01d;
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: inline-block;
+  position: absolute;
+  top: 5px;
+  left: -8px;
+  box-shadow: rgba(60,64,67,0.1) 0 1px 0 0, rgba(60,64,67,0.15) 0 2px 3px 2px;
+  color: #fff;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  border-top-left-radius: 8px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  z-index: 1;
+}
+.flash-sale::after {
+  content: "";
+  height: 0; width: 0;
+  display: block;
+  position: absolute;
+  bottom: -4px; left: 0;
+  border-top: 4px solid #218109;
+  border-left: 7px solid transparent;
+}
+.tag-soldout { background-color: #afafaf; }
+.tag-soldout::after { border-top-color: #666; }
 
 /* Product info */
 .product-info { padding: 0 2px; }
 
 .product-name {
   font-size: 1.6rem;
-  font-weight: 500;
+  font-weight: bold;
   margin: 0 0 6px 0;
   min-height: 44px;
 }
 .product-name a { color: #333; }
 .product-name a:hover { color: #7bb842; }
+@media (max-width: 991px) { .product-name { font-size: 1.4rem; } }
 
-@media (max-width: 767px) {
-  .product-name { font-size: 1.4rem; min-height: 40px; }
+.product-price-cart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
 }
-
-/* Price */
-.price-box { margin-bottom: 4px; }
-.price-box .price {
-  color: #f83015;
-  font-weight: 700;
-  font-size: 1.8rem;
-  line-height: 1;
+.price-box {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
 }
 .price-box .compare-price {
+  display: block;
+  width: 100%;
   color: #9aa5b3;
   font-size: 1.3rem;
   text-decoration: line-through;
-  line-height: 1;
-  margin-right: 6px;
+  line-height: initial;
 }
+.price-box .price {
+  color: #f83015;
+  font-weight: 700;
+  display: block;
+  width: 100%;
+  font-size: 1.8rem;
+  line-height: initial;
+}
+@media (max-width: 991px) { .price-box .price { font-size: 1.6rem; } }
+@media (max-width: 480px) { .price-box .price { font-size: 1.4rem; } }
 
-@media (max-width: 767px) {
-  .price-box .price { font-size: 1.6rem; }
-  .item_product_main { padding: 0 0 7px 0; }
-  .product-action { padding: 7px; }
+/* Add to cart button */
+.product-button { flex: none; width: 36px; height: 43px; margin-left: 5px; }
+.product-button button {
+  width: 36px; height: 36px;
+  display: flex; justify-content: center; align-items: center;
+  border-radius: 5px; transition-duration: .3s; border: 0; padding: 0;
+  cursor: pointer;
+}
+.product-button button svg { width: 22px; height: 22px; }
+.product-button button.add_to_cart { color: #fff; background: #141414; }
+.product-button button.add_to_cart:hover { background: #7bb842; }
+.product-button button.disable { color: #9d9d9d; background: #f3f3f3; cursor: not-allowed; }
+@media (max-width: 991px) {
+  .product-button button { width: 30px; height: 30px; }
+  .product-button button svg { width: 18px; height: 18px; }
 }
 
 /* Promotion content */
@@ -2033,6 +2087,67 @@ footer.footer { clear: both; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
 .promotion-content b,
 .promotion-content strong { color: #7bb842; }
 .promotion-content p { margin: 0; }
+@media (max-width: 991px) { .promotion-content { font-size: 1.2rem; } }
+
+/* Desktop hover state */
+@media (min-width: 1200px) {
+  .product-action:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .product-action:hover .image_thumb img { transform: scale(1.03); }
+  .product-action:hover .action-button .btn-circle {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .product-action:hover .btn-circle:nth-child(1) { transition-delay: 0s; }
+  .product-action:hover .btn-circle:nth-child(2) { transition-delay: 0.05s; }
+  .product-action:hover .btn-circle:nth-child(3) { transition-delay: 0.08s; }
+  .btn-circle:hover { background: #141414 !important; }
+  .btn-circle:hover svg { stroke: #fff; }
+}
+
+/* Category page: wrap grid (not scroll) */
+.product-grid-wrap {
+  flex-wrap: wrap !important;
+  overflow-x: visible !important;
+}
+
+/* ============================================================
+   27b. BREADCRUMB + PAGINATION (Match XML)
+   ============================================================ */
+.bread-crumb { background: #fff; margin-bottom: 20px; box-shadow: 0 3px 3px rgba(0,0,0,0.1); }
+@media (max-width: 768px) { .bread-crumb { margin-bottom: 15px; } }
+.breadcrumb {
+  margin: 0; font-size: 14px; padding: 10px 0; border-radius: 0;
+  font-weight: 400; line-height: 24px; background-color: transparent;
+  list-style: none; display: flex; flex-wrap: wrap; align-items: center;
+}
+.breadcrumb li { display: inline; }
+.breadcrumb li > a { color: #333; }
+.breadcrumb li .mr_lr { padding: 0 3px; color: #333; display: inline-flex; align-items: center; }
+.breadcrumb li a:hover, .breadcrumb li.active, .breadcrumb li strong {
+  color: #7bb842; font-weight: 400; text-decoration: none;
+}
+
+.nav_pagi { display: inline-block; background: #fff; width: 100%; margin-top: 20px; }
+.nav_pagi .pagination {
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: center; list-style: none; padding: 0; margin: 0;
+}
+.page-item { list-style: none; }
+.page-link {
+  float: left; margin: 0 2.5px 5px; width: 30px; height: 30px;
+  background: transparent; border: 1px solid #141414; text-align: center;
+  font-size: 14px; padding: 0; line-height: 28px; color: #141414;
+  text-decoration: none; border-radius: 5px; display: flex;
+  align-items: center; justify-content: center;
+}
+.page-link:hover { background-color: #141414; color: #fff; }
+.page-item.active .page-link {
+  background-color: #141414; border-color: #141414; color: #fff;
+}
+.page-item.disabled .page-link { border: 0; display: none; }
 
 /* ============================================================
    28. FEATURES STRIP (section_services — Match XML)
