@@ -6,7 +6,9 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { FloatingWidget } from '@/components/layout/FloatingWidget'
 import { BackToTop } from '@/components/layout/BackToTop'
+import { MobileWrapper } from '@/components/layout/MobileWrapper'
 import { LocalBusinessSchema } from '@/components/seo/JsonLd'
+import { getCategoriesHierarchical } from '@/lib/supabase/catalog'
 
 const nunito = Nunito({
   subsets: ['latin', 'latin-ext', 'vietnamese'],
@@ -63,7 +65,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const settings = await getWebSettings()
+  const [settings, categories] = await Promise.all([
+    getWebSettings(),
+    getCategoriesHierarchical(),
+  ])
 
   // Build CSS variables from admin theme settings
   const themeVars = {
@@ -122,6 +127,7 @@ export default async function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
+        <MobileWrapper categories={categories} />
         <FloatingWidget settings={settings} />
         <BackToTop />
 
