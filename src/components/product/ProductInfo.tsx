@@ -1,157 +1,224 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { formatVND } from '@/lib/utils'
-import { addToCart } from '@/lib/cart/store'
+import { useState } from 'react';
+import type { Product } from '@/types/product';
+import { formatPrice, getDiscountPercent } from '@/lib/utils';
+import { conditionLabels } from '@/types/product';
+import { useCart } from '@/hooks/useCart';
+import { Check, Minus, Plus, ShoppingCart } from 'lucide-react';
 
 interface Props {
-  product: {
-    id: string
-    name: string
-    slug: string
-    thumbnail?: string
-    price_min?: number
-    price_max?: number
-    price?: number
-    sale_price?: number
-    stock?: number
-    sku?: string
-    condition_note?: string
-    specs?: Record<string, string>
-  }
-  variant: 'catalog' | 'shop'
-  phone?: string
+  product: Product;
 }
 
-export function ProductInfo({ product, variant, phone }: Props) {
-  const [qty, setQty] = useState(1)
-  const isShop = variant === 'shop'
-  const outOfStock = isShop && product.stock !== undefined && product.stock <= 0
-
-  const handleAddCart = () => {
-    if (outOfStock) return
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.sale_price || product.price || product.price_min || 0,
-      image: product.thumbnail,
-    }, qty)
+function getStorageOptions(product: Product): string[] {
+  const storage = product.specs['Bộ nhớ'] || product.specs['SSD'];
+  if (!storage) return [];
+  if (product.category === 'ipad') {
+    if (storage.includes('64')) return ['64GB', '128GB', '256GB'];
+    if (storage.includes('128')) return ['128GB', '256GB'];
+    if (storage.includes('256')) return ['256GB', '512GB', '2TB'];
+    if (storage.includes('512')) return ['256GB', '512GB', '2TB'];
   }
+  if (product.category === 'macbook') {
+    if (storage.includes('256')) return ['256GB', '512GB', '1TB'];
+    if (storage.includes('512')) return ['512GB', '1TB'];
+  }
+  return [storage];
+}
 
-  const specs = Object.entries(product.specs || {}).slice(0, 5)
+function getColorOptions(product: Product): string[] {
+  if (product.model === 'iPad Mini') return ['Tím', 'Xanh Dương', 'Xám', 'Trắng Vàng'];
+  if (product.model === 'iPad Air') return ['Xám', 'Xanh Dương', 'Tím', 'Ánh Sao'];
+  if (product.model === 'iPad Pro') return ['Xám', 'Bạc'];
+  if (product.model === 'iPad Gen') return ['Xám', 'Bạc', 'Xanh', 'Vàng'];
+  if (product.category === 'macbook') return ['Xám', 'Bạc', 'Đen Không Gian', 'Ánh Sao'];
+  if (product.category === 'am-thanh') return ['Trắng', 'Đen'];
+  return [];
+}
+
+export default function ProductInfo({ product }: Props) {
+  const { addItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [selectedStorage, setSelectedStorage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(0);
+
+  const discount = product.originalPrice
+    ? getDiscountPercent(product.price, product.originalPrice)
+    : 0;
+
+  const storageOptions = getStorageOptions(product);
+  const colorOptions = getColorOptions(product);
+
+  const handleAddToCart = () => {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0] || '',
+      quantity,
+      condition: conditionLabels[product.condition],
+    });
+  };
 
   return (
-    <div className="product-detail-info">
-      {/* Title */}
-      <h1 className="title-product">{product.name}</h1>
+    <div>
+      {/* Product name */}
+      <h1 className="text-xl lg:text-2xl font-bold text-text-dark leading-tight">
+        {product.name}
+      </h1>
 
-      {/* SKU */}
-      <div className="product-top">
-        {product.sku && (
-          <span className="sku-product">
-            SKU: <strong style={{ marginLeft: 4 }}>{product.sku.toUpperCase()}</strong>
+      {/* Brand + stock status */}
+      <div className="mt-2 flex items-center gap-2 text-sm text-text-muted">
+        <span>Thương hiệu: <span className="font-medium text-text-dark">Apple</span></span>
+        <span className="text-border">|</span>
+        <span>Tình trạng: {product.inStock
+          ? <span className="font-semibold text-navy">Còn hàng</span>
+          : <span className="font-semibold text-discount-red">Hết hàng</span>
+        }</span>
+      </div>
+
+      {/* Divider */}
+      <hr className="my-4 border-border" />
+
+      {/* Price bar with hover flip */}
+      <div className="group relative rounded-xl overflow-hidden h-14 lg:h-16 cursor-pointer">
+        {/* Default state — orange bg */}
+        <div className="absolute inset-0 bg-price-orange flex items-center px-5 gap-4 transition-opacity duration-300 group-hover:opacity-0">
+          <span className="text-white font-bold text-2xl lg:text-[28px] leading-none">
+            {formatPrice(product.price)}
           </span>
+          {product.originalPrice && (
+            <span className="text-white/60 text-sm line-through">
+              {formatPrice(product.originalPrice)}
+            </span>
+          )}
+          {discount > 0 && (
+            <span className="bg-navy text-white text-sm font-bold px-3 py-1 rounded-lg ml-auto">
+              -{discount}%
+            </span>
+          )}
+        </div>
+        {/* Hover state — navy-green bg */}
+        {product.originalPrice && (
+          <div className="absolute inset-0 bg-navy flex items-center px-5 gap-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <span className="text-white font-bold text-2xl lg:text-[28px] leading-none">
+              {formatPrice(product.price)}
+            </span>
+            <span className="bg-price-orange text-white text-sm font-bold px-4 py-1.5 rounded-lg ml-auto whitespace-nowrap">
+              Tiết kiệm {formatPrice(product.originalPrice - product.price)}
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Price */}
-      <div className="price-box-detail" style={{ marginBottom: 15 }}>
-        {isShop ? (
-          <>
-            {product.sale_price && product.sale_price < (product.price || 0) ? (
-              <>
-                <span className="special-price">{formatVND(product.sale_price)}đ</span>
-                <span className="old-price" style={{ marginLeft: 10 }}>{formatVND(product.price!)}đ</span>
-              </>
-            ) : (
-              <span className="special-price">{formatVND(product.price || 0)}đ</span>
-            )}
-          </>
-        ) : (
-          <span className="special-price">
-            {product.price_min
-              ? product.price_min === product.price_max
-                ? `${formatVND(product.price_min)}đ`
-                : `${formatVND(product.price_min)}đ - ${formatVND(product.price_max || product.price_min)}đ`
-              : 'Liên hệ'
-            }
-          </span>
-        )}
-      </div>
-
-      {/* Stock status */}
-      {isShop && (
-        <p style={{ fontSize: '1.4rem', color: '#666', marginBottom: 10 }}>
-          Tình trạng: {product.stock! > 0
-            ? <span style={{ color: '#7bb842', fontWeight: 600 }}>Còn hàng ({product.stock})</span>
-            : <span style={{ color: '#f83015', fontWeight: 600 }}>Hết hàng</span>
-          }
-        </p>
-      )}
-
-      {/* Condition note */}
-      {product.condition_note && (
-        <div style={{ background: '#f1f1f1', borderRadius: 8, padding: '8px 12px', marginBottom: 15, fontSize: '1.4rem' }}
-          dangerouslySetInnerHTML={{ __html: product.condition_note }}
-        />
-      )}
-
-      {/* Quick specs */}
-      {specs.length > 0 && (
-        <div className="specifications" style={{ marginBottom: 15 }}>
-          <table>
-            <tbody>
-              {specs.map(([k, v]) => (
-                <tr key={k}>
-                  <td style={{ fontWeight: 600, color: '#444' }}>{k}</td>
-                  <td>{v}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Color selector */}
+      {colorOptions.length > 0 && (
+        <div className="mt-5">
+          <p className="text-sm font-semibold text-text-dark mb-2.5">Màu sắc:</p>
+          <div className="flex flex-wrap gap-2">
+            {colorOptions.map((opt, i) => (
+              <button
+                key={opt}
+                onClick={() => setSelectedColor(i)}
+                className={`relative px-4 py-2 text-sm border rounded-lg transition-all ${
+                  selectedColor === i
+                    ? 'border-navy text-navy font-semibold bg-white shadow-sm'
+                    : 'border-border text-text-muted hover:border-navy/40 bg-white'
+                }`}
+              >
+                {opt}
+                {selectedColor === i && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-navy rounded-full flex items-center justify-center">
+                    <Check className="h-2.5 w-2.5 text-white" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Storage selector */}
+      {storageOptions.length > 1 && (
+        <div className="mt-5">
+          <p className="text-sm font-semibold text-text-dark mb-2.5">Dung lượng:</p>
+          <div className="flex flex-wrap gap-2">
+            {storageOptions.map((opt, i) => (
+              <button
+                key={opt}
+                onClick={() => setSelectedStorage(i)}
+                className={`relative px-4 py-2 text-sm border rounded-lg transition-all ${
+                  selectedStorage === i
+                    ? 'border-navy text-navy font-semibold bg-white shadow-sm'
+                    : 'border-border text-text-muted hover:border-navy/40 bg-white'
+                }`}
+              >
+                {opt}
+                {selectedStorage === i && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-navy rounded-full flex items-center justify-center">
+                    <Check className="h-2.5 w-2.5 text-white" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quantity */}
+      <div className="mt-6 flex items-center gap-3">
+        <span className="text-sm font-semibold text-text-dark">Số lượng:</span>
+        <div className="flex items-center border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            className="w-9 h-9 flex items-center justify-center text-text-dark text-base font-medium hover:bg-bg-gray transition-colors"
+          >
+            <Minus size={16} />
+          </button>
+          <span className="w-9 h-9 flex items-center justify-center text-sm font-bold border-x border-border bg-white">
+            {quantity}
+          </span>
+          <button
+            onClick={() => setQuantity(quantity + 1)}
+            className="w-9 h-9 flex items-center justify-center text-text-dark text-base font-medium hover:bg-bg-gray transition-colors"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+
       {/* Action buttons */}
-      <div className="button_actions" style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-        {isShop ? (
-          <>
-            {/* Quantity */}
-            <div className="input_number_product">
-              <button className="btn_num" onClick={() => setQty(Math.max(1, qty - 1))} type="button">−</button>
-              <input type="text" value={qty} readOnly />
-              <button className="btn_num" onClick={() => setQty(qty + 1)} type="button">+</button>
-            </div>
+      <div className="mt-4 flex items-stretch gap-3">
+        {/* MUA NGAY */}
+        <button
+          disabled={!product.inStock}
+          className={`flex-1 flex flex-col items-center justify-center py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-colors ${
+            product.inStock
+              ? 'bg-navy hover:bg-navy-dark text-white cursor-pointer'
+              : 'bg-navy/30 text-white/50 cursor-not-allowed'
+          }`}
+        >
+          <span className="text-base">MUA NGAY</span>
+          <span className="text-[11px] font-normal normal-case tracking-normal mt-0.5 opacity-80">
+            Giao tận nơi hoặc nhận tại cửa hàng
+          </span>
+        </button>
 
-            {/* Buy now */}
-            <button
-              className="btn btn-buyNow"
-              onClick={handleAddCart}
-              disabled={outOfStock}
-              style={{ flex: 1 }}
-            >
-              <span className="txt-main">MUA NGAY</span>
-            </button>
-
-            {/* Add to cart */}
-            <button
-              className="btn btn_add_cart"
-              onClick={handleAddCart}
-              disabled={outOfStock}
-              aria-label="Thêm giỏ hàng"
-            >
-              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg>
-            </button>
-          </>
-        ) : (
-          /* Catalog: call to action */
-          <a href={`tel:${(phone || '').replace(/\./g, '')}`} className="btn btn-buyNow" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="txt-main">GỌI NGAY</span>
-            <span style={{ fontSize: '1.3rem', opacity: 0.8 }}>{phone || 'POLY Store'}</span>
-          </a>
-        )}
+        {/* Thêm vào giỏ */}
+        <button
+          onClick={product.inStock ? handleAddToCart : undefined}
+          disabled={!product.inStock}
+          className={`flex flex-col items-center justify-center px-5 py-3 rounded-xl border-2 transition-colors ${
+            product.inStock
+              ? 'border-border text-text-muted hover:border-navy hover:text-navy cursor-pointer'
+              : 'border-border/50 text-text-muted/30 cursor-not-allowed'
+          }`}
+        >
+          <ShoppingCart className="h-6 w-6" strokeWidth={1.5} />
+          <span className="text-[11px] font-medium mt-1">Thêm vào giỏ</span>
+        </button>
       </div>
     </div>
-  )
+  );
 }

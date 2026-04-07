@@ -1,161 +1,102 @@
-'use client'
+'use client';
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { formatVND } from '@/lib/utils'
-import { addToCart } from '@/lib/cart/store'
-
-interface ProductData {
-  id: string
-  name: string
-  slug: string
-  thumbnail?: string
-  images?: string[]
-  price_min?: number
-  price_max?: number
-  price?: number
-  sale_price?: number
-  condition_note?: string
-  badge?: string
-  short_description?: string
-  stock?: number
-  is_flash_sale?: boolean
-  sold_percent?: number
-}
+import { useState } from 'react';
+import Link from 'next/link';
+import type { Product } from '@/types/product';
+import { conditionLabels } from '@/types/product';
+import { formatPrice, getDiscountPercent, getProductImageUrl, getProductImageFallback } from '@/lib/utils';
+import QuickViewModal from './QuickViewModal';
+import { ShoppingCart } from 'lucide-react';
 
 interface Props {
-  product: ProductData
-  variant: 'catalog' | 'shop' | 'flash-sale'
+  product: Product;
 }
 
-export function ProductCard({ product, variant }: Props) {
-  const isCatalog = variant === 'catalog'
-  const isShop = variant === 'shop' || variant === 'flash-sale'
-  const href = isCatalog ? `/san-pham/${product.slug}` : `/shop/${product.slug}`
-  const thumb = product.thumbnail || product.images?.[0]
-  const outOfStock = isShop && product.stock !== undefined && product.stock <= 0
+export default function ProductCard({ product }: Props) {
+  const [quickView, setQuickView] = useState(false);
 
-  const handleAddCart = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (outOfStock) return
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.sale_price || product.price || product.price_min || 0,
-      image: thumb,
-    })
-  }
+  const discount = product.originalPrice
+    ? getDiscountPercent(product.price, product.originalPrice)
+    : 0;
 
-  // Calculate discount percent for flash-sale badge
-  const discountPercent = product.sale_price && product.price && product.sale_price < product.price
-    ? Math.round((1 - product.sale_price / product.price) * 100)
-    : 0
+  const handleOpenQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickView(true);
+  };
+
+  const imgSrc = getProductImageUrl(product.category, product.name);
+  const imgFallback = getProductImageFallback(product.category, product.name);
 
   return (
-    <div className="item_product_main">
-      <div className="product-action">
-        {/* Flash sale / discount badge */}
-        {variant === 'flash-sale' && discountPercent > 0 && (
-          <span className="flash-sale">Giảm {discountPercent}%</span>
-        )}
-        {product.badge && variant !== 'flash-sale' && (
-          <span className="flash-sale">{product.badge}</span>
-        )}
-        {outOfStock && <span className="flash-sale tag-soldout">Hết hàng</span>}
-
-        {/* Thumbnail */}
-        <div className="product-thumbnail">
-          <Link href={href} className="image_thumb scale_hover">
-            {thumb ? (
-              <Image
-                src={thumb}
-                alt={product.name}
-                width={300}
-                height={300}
-                sizes="(max-width: 767px) 50vw, 25vw"
-                style={{ width: 'auto', maxHeight: '100%', objectFit: 'contain', position: 'absolute', inset: 0, margin: 'auto' }}
-              />
-            ) : (
-              <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', color: '#ccc' }}>📷</span>
-            )}
-          </Link>
-
-          {/* Action buttons (desktop hover reveal) */}
-          <div className="action-button">
-            <Link href={href} className="btn-circle" title="Xem nhanh">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-            </Link>
-            {isShop && (
-              <button type="button" className="btn-circle" title="Thêm giỏ hàng" onClick={handleAddCart}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="product-info">
-          <h3 className="product-name line-clamp line-clamp-2">
-            <Link href={href}>{product.name}</Link>
-          </h3>
-
-          <div className="product-price-cart">
-            <div className="price-box">
-              {isCatalog ? (
-                <CatalogPrice priceMin={product.price_min} priceMax={product.price_max} />
-              ) : (
-                <ShopPrice price={product.price} salePrice={product.sale_price} />
-              )}
-            </div>
-
-            {/* Add to cart button (shop/flash-sale only) */}
-            {isShop && (
-              <div className="product-button">
-                <button
-                  type="button"
-                  className={outOfStock ? 'disable' : 'add_to_cart'}
-                  onClick={handleAddCart}
-                  disabled={outOfStock}
-                  aria-label="Thêm giỏ hàng"
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg>
-                </button>
-              </div>
-            )}
+    <>
+      <Link
+        href={`/san-pham/${product.category}/${product.slug}`}
+        className="group block bg-white rounded-xl border border-border hover:shadow-lg transition-all overflow-hidden"
+      >
+        {/* Image area */}
+        <div className="relative aspect-square bg-white overflow-hidden">
+          <div className="w-full h-full flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+            <img
+              src={imgSrc}
+              alt={product.name}
+              className="w-full h-full object-contain p-2"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).src = imgFallback; }}
+            />
           </div>
 
-          {/* Promotion / condition note */}
-          {product.condition_note && (
-            <div className="promotion-content">
-              <div className="line-clamp-2-new">
-                <p style={{ margin: 0 }} dangerouslySetInnerHTML={{ __html: product.condition_note }} />
-              </div>
+          {/* Discount badge - top left */}
+          {discount > 0 && (
+            <span className="absolute top-2 left-2 bg-discount-red text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
+              -{discount}%
+            </span>
+          )}
+
+          {/* Condition badge - top right */}
+          <span className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-text-dark text-[10px] font-medium px-2 py-0.5 rounded-md border border-border/50">
+            {conditionLabels[product.condition]}
+          </span>
+
+          {/* Hết hàng overlay */}
+          {!product.inStock && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <span className="text-white text-sm font-bold bg-black/50 px-3 py-1 rounded-lg">Hết hàng</span>
             </div>
           )}
+
+
         </div>
-      </div>
-    </div>
-  )
-}
 
-function CatalogPrice({ priceMin, priceMax }: { priceMin?: number; priceMax?: number }) {
-  if (!priceMin) return <span className="price">Liên hệ</span>
-  if (priceMin === priceMax || !priceMax) {
-    return <span className="price">{formatVND(priceMin)}đ</span>
-  }
-  return <span className="price">{formatVND(priceMin)}đ - {formatVND(priceMax)}đ</span>
-}
+        <hr className="border-border/50" />
 
-function ShopPrice({ price, salePrice }: { price?: number; salePrice?: number }) {
-  if (!price) return <span className="price">Liên hệ</span>
-  if (salePrice && salePrice < price) {
-    return (
-      <>
-        <span className="compare-price">{formatVND(price)}đ</span>
-        <span className="price">{formatVND(salePrice)}đ</span>
-      </>
-    )
-  }
-  return <span className="price">{formatVND(price)}đ</span>
+        {/* Info */}
+        <div className="p-3">
+          <h3 className="text-sm font-medium text-text-dark line-clamp-2 min-h-[2.5rem] leading-snug group-hover:text-navy transition-colors">
+            {product.name}
+          </h3>
+
+          {/* Price box */}
+          <div
+            className="mt-3 bg-bg-gray hover:bg-navy rounded-xl px-3 py-2.5 transition-colors duration-200 cursor-pointer group/price"
+            onClick={handleOpenQuickView}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-price-orange group-hover/price:text-white font-bold text-base transition-colors duration-200">
+                {formatPrice(product.price)}
+              </span>
+              <ShoppingCart className="h-5 w-5 text-navy group-hover/price:text-white transition-colors duration-200" />
+            </div>
+            {product.originalPrice && (
+              <span className="text-text-muted group-hover/price:text-white/60 text-xs line-through block mt-0.5 transition-colors duration-200">
+                {formatPrice(product.originalPrice)}
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      <QuickViewModal product={product} open={quickView} onClose={() => setQuickView(false)} />
+    </>
+  );
 }
