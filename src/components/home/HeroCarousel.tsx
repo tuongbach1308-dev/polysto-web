@@ -1,11 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { banners } from '@/data/banners';
+import type { Banner } from '@/data/banners';
+import { banners as staticBanners } from '@/data/banners';
 import { useCarousel } from '@/hooks/useCarousel';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function HeroCarousel() {
+interface Props {
+  banners?: Banner[];
+}
+
+export default function HeroCarousel({ banners: propBanners }: Props) {
+  const banners = propBanners?.length ? propBanners : staticBanners;
   const { current, next, prev, goTo } = useCarousel(banners.length);
 
   return (

@@ -110,9 +110,11 @@ export default function CartPage() {
             </span>
           </div>
 
-          <Button size="lg" className="w-full mt-4">
-            Thanh toán
-          </Button>
+          <Link href="/gio-hang/thanh-toan">
+            <Button size="lg" className="w-full mt-4">
+              Thanh toán
+            </Button>
+          </Link>
 
           <p className="mt-3 text-xs text-text-muted text-center">
             Miễn phí vận chuyển cho đơn hàng từ 300.000đ

@@ -1,8 +1,14 @@
 import Link from 'next/link';
-import { categories } from '@/data/categories';
+import type { Category } from '@/types/product';
+import { categories as staticCategories } from '@/data/categories';
 import { getCategoryIcon } from '@/lib/category-icons';
 
-export default function CategoryBanner() {
+interface Props {
+  categories?: Category[];
+}
+
+export default function CategoryBanner({ categories: propCategories }: Props) {
+  const categories = propCategories?.length ? propCategories : staticCategories;
   return (
     <div className="flex gap-3 overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 lg:grid-cols-7 md:overflow-visible">
       {categories.map((cat) => (

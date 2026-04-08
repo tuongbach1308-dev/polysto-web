@@ -2,11 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { blogPosts } from '@/data/blog-posts';
+import type { BlogPost } from '@/types/blog';
+import { blogPosts as staticPosts } from '@/data/blog-posts';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
-export default function BlogPreview() {
-  const recentPosts = blogPosts.slice(0, 6);
+interface Props {
+  posts?: BlogPost[];
+}
+
+export default function BlogPreview({ posts }: Props) {
+  const recentPosts = posts?.length ? posts.slice(0, 6) : staticPosts.slice(0, 6);
   const [scrollPos, setScrollPos] = useState(0);
 
   const scroll = (dir: 'left' | 'right') => {

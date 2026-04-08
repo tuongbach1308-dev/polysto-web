@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const q = searchParams.get('q')?.trim()
+    if (!q) return NextResponse.json({ error: 'Thiếu từ khóa tra cứu' }, { status: 400 })
+
+    const supabase = createServerClient()
+
+    // Try order_number first, then phone
+    let query = supabase.from('web_shop_orders').select('*')
+    if (q.startsWith('WEB-') || q.startsWith('web-')) {
+      query = query.ilike('order_number', q)
+    } else if (/^\d+$/.test(q)) {
+      query = query.eq('customer_phone', q)
+    } else {
+      query = query.ilike('order_number', `%${q}%`)
+    }
+    query = query.order('created_at', { ascending: false }).limit(10)
+
+    const { data, error } = await query
+    if (error) throw error
+
+    return NextResponse.json(data || [])
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
