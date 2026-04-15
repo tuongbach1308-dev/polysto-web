@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -36,6 +36,21 @@ export default function ProductDetailClient({ product, variants, productImages =
   const [thumbs, setThumbs] = useState<SwiperType | null>(null);
   const [added, setAdded] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const specsColRef = useRef<HTMLDivElement>(null);
+  const [specsColHeight, setSpecsColHeight] = useState(0);
+
+  // Measure right column height to sync collapsed content height
+  const measureSpecsCol = useCallback(() => {
+    if (specsColRef.current) {
+      setSpecsColHeight(specsColRef.current.offsetHeight);
+    }
+  }, []);
+
+  useEffect(() => {
+    measureSpecsCol();
+    window.addEventListener("resize", measureSpecsCol);
+    return () => window.removeEventListener("resize", measureSpecsCol);
+  }, [measureSpecsCol]);
   const [qty, setQty] = useState(1);
   const [gallerySwiper, setGallerySwiper] = useState<SwiperType | null>(null);
   const [isBeginning, setIsBeginning] = useState(true);
@@ -213,11 +228,11 @@ export default function ProductDetailClient({ product, variants, productImages =
           <div className="lg:col-span-2">
             <div className="bg-white border border-gray-200 rounded-lg p-5">
               <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide mb-4">Thông tin sản phẩm</h2>
-              {clean ? (<><div className="relative"><div className={`post-body ${!expanded ? "max-h-[400px] overflow-hidden" : ""}`} dangerouslySetInnerHTML={{ __html: clean }} />{!expanded && (<div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />)}</div><button onClick={() => setExpanded(!expanded)} className="mt-3 w-full py-2.5 text-sm text-brand-500 font-semibold hover:text-brand-600 transition-colors flex items-center justify-center gap-1 border border-brand-200 rounded-md hover:bg-brand-50">{expanded ? "Thu gọn" : "Xem thêm"} <ChevronDown size={14} className={expanded ? "rotate-180 transition-transform" : "transition-transform"} /></button></>) : (<p className="text-sm text-gray-400">Chưa có thông tin sản phẩm.</p>)}
+              {clean ? (<><div className="relative"><div className={`post-body ${!expanded ? "overflow-hidden" : ""}`} style={!expanded ? { maxHeight: specsColHeight > 0 ? `${specsColHeight - 100}px` : "400px" } : undefined} dangerouslySetInnerHTML={{ __html: clean }} />{!expanded && (<div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />)}</div><button onClick={() => setExpanded(!expanded)} className="mt-3 w-full py-2.5 text-sm text-brand-500 font-semibold hover:text-brand-600 transition-colors flex items-center justify-center gap-1 border border-brand-200 rounded-md hover:bg-brand-50">{expanded ? "Thu gọn" : "Xem thêm"} <ChevronDown size={14} className={expanded ? "rotate-180 transition-transform" : "transition-transform"} /></button></>) : (<p className="text-sm text-gray-400">Chưa có thông tin sản phẩm.</p>)}
             </div>
           </div>
 
-          <div className="lg:col-span-1 space-y-4">
+          <div ref={specsColRef} className="lg:col-span-1 space-y-4">
             {specEntries.length > 0 && (
               <div className="bg-white border border-gray-200 rounded-lg p-5 sticky space-y-5" style={{ top: "var(--sticky-offset)" }}>
                 <div>
