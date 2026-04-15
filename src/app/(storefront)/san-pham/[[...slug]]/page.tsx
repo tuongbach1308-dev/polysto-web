@@ -7,8 +7,6 @@ import { ChevronRight, Home } from "lucide-react";
 import type { Product, Post, Category } from "@/lib/database.types";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import ProductGrid from "@/components/ProductGrid";
-import SidebarFilter from "@/components/SidebarFilter";
-import MobileFilter from "@/components/MobileFilter";
 import JsonLd from "@/components/JsonLd";
 import { SkeletonBox, SkeletonProductCard } from "@/components/Skeleton";
 import { buildProductJsonLd, buildBreadcrumbJsonLd, buildCollectionJsonLd, buildProductMetadata, buildCategoryMetadata } from "@/lib/seo";
@@ -324,132 +322,100 @@ function renderListing(
   }
 
   return (
-    <div className="bg-surface min-h-screen">
+    <div>
       <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: breadcrumbItems }} />
 
-      <div className="max-w-[1200px] mx-auto px-4 py-4">
-        {/* Breadcrumb */}
-        <nav className="mb-4">
-          <ol className="flex items-center gap-1.5 text-[13px] overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            <li className="flex-shrink-0"><Link href="/" className="text-brand-600 hover:text-brand-700 flex items-center gap-1"><Home size={13} /> Trang chủ</Link></li>
-            <li className="flex-shrink-0 text-gray-300">/</li>
-            <li className="flex-shrink-0">
-              {chain.length > 0
-                ? <Link href="/san-pham" className="text-brand-600 hover:text-brand-700">Sản phẩm</Link>
-                : <span className="text-gray-500">Sản phẩm</span>
-              }
-            </li>
-            {chain.map((c, i) => (
-              <span key={c.id} className="contents">
-                <li className="flex-shrink-0 text-gray-300">/</li>
-                <li className="flex-shrink-0">
-                  {i < chain.length - 1
-                    ? <Link href={`/san-pham/${slugPath.slice(0, i + 1).join("/")}`} className="text-brand-600 hover:text-brand-700">{c.name}</Link>
-                    : <span className="text-gray-500">{c.name}</span>
-                  }
-                </li>
-              </span>
-            ))}
-          </ol>
-        </nav>
+      {/* Breadcrumb */}
+      <nav className="mb-4">
+        <ol className="flex items-center gap-1.5 text-[13px] overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <li className="flex-shrink-0"><Link href="/" className="text-brand-600 hover:text-brand-700 flex items-center gap-1"><Home size={13} /> Trang chủ</Link></li>
+          <li className="flex-shrink-0 text-gray-300">/</li>
+          <li className="flex-shrink-0">
+            {chain.length > 0
+              ? <Link href="/san-pham" className="text-brand-600 hover:text-brand-700">Sản phẩm</Link>
+              : <span className="text-gray-500">Sản phẩm</span>
+            }
+          </li>
+          {chain.map((c, i) => (
+            <span key={c.id} className="contents">
+              <li className="flex-shrink-0 text-gray-300">/</li>
+              <li className="flex-shrink-0">
+                {i < chain.length - 1
+                  ? <Link href={`/san-pham/${slugPath.slice(0, i + 1).join("/")}`} className="text-brand-600 hover:text-brand-700">{c.name}</Link>
+                  : <span className="text-gray-500">{c.name}</span>
+                }
+              </li>
+            </span>
+          ))}
+        </ol>
+      </nav>
 
-        {/* Category banner */}
-        {activeCategory?.banner_url ? (
-          <div className="mb-5 relative rounded-xl overflow-hidden h-[160px] sm:h-[200px]">
-            <img
-              src={activeCategory.banner_url}
-              alt={activeCategory.name}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-            <div className="relative h-full flex flex-col justify-center px-6 sm:px-10 text-white max-w-[600px]">
-              <h1 className="text-2xl sm:text-3xl font-bold mb-1">{activeCategory.name}</h1>
-              {activeCategory.description && (
-                <p className="text-sm sm:text-base text-white/80 line-clamp-2">{activeCategory.description}</p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="mb-5 rounded-xl bg-gradient-to-r from-brand-700 to-brand-500 px-6 py-6 text-white">
-            <div className="flex items-center gap-3">
-              {activeCategory?.image_url && (
-                <img src={activeCategory.image_url} alt={activeCategory.name} className="w-12 h-12 rounded-lg bg-white/10 object-cover" />
-              )}
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold">
-                  {activeCategory ? activeCategory.name : "Tất cả sản phẩm Apple"}
-                </h1>
-                {activeCategory?.description && (
-                  <p className="text-sm text-white/80 mt-0.5">{activeCategory.description}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sub-category pills */}
-        {(childCategories.length > 0 || siblingCategories.length > 0) && (
-          <div className="flex gap-2 mb-5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {(childCategories.length > 0 ? childCategories : siblingCategories).map((c) => {
-              const isActive = activeCategory?.id === c.id;
-              // Build path for child
-              let childPath: string;
-              if (childCategories.length > 0) {
-                childPath = `${basePath}/${c.slug}`;
-              } else {
-                // Sibling — replace last segment
-                childPath = `/san-pham/${slugPath.slice(0, -1).join("/")}${slugPath.length > 1 ? "/" : ""}${c.slug}`;
-              }
-              return (
-                <Link key={c.id} href={childPath}
-                  className={`px-4 py-2.5 min-h-[44px] flex items-center rounded-md text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${isActive ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-                  {c.name}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Mobile filter button */}
-        <div className="lg:hidden mb-4">
-          <MobileFilter
-            categories={allCategories}
-            activeCategoryId={activeCategory?.id || null}
-            currentPath={basePath}
-            currentPrice={sp.price}
-            currentCondition={sp.condition}
-            filterCount={(sp.price ? 1 : 0) + ((sp.condition || "").split(",").filter(Boolean).length)}
+      {/* Category banner */}
+      {activeCategory?.banner_url ? (
+        <div className="mb-5 relative rounded-xl overflow-hidden h-[160px] sm:h-[200px]">
+          <img
+            src={activeCategory.banner_url}
+            alt={activeCategory.name}
+            className="absolute inset-0 w-full h-full object-cover"
           />
-        </div>
-
-        {/* Main layout: sidebar + grid */}
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="hidden lg:block w-[220px] flex-shrink-0">
-            <SidebarFilter
-              categories={allCategories}
-              activeCategoryId={activeCategory?.id || null}
-              currentPath={basePath}
-              currentPrice={sp.price}
-              currentCondition={sp.condition}
-            />
-          </div>
-
-          {/* Product grid */}
-          <div className="flex-1 min-w-0">
-            <ProductGrid
-              products={filtered}
-              totalCount={sp.condition ? filtered.length : totalCount}
-              currentPage={parseInt(sp.page || "1")}
-              perPage={PER_PAGE}
-              basePath={basePath}
-              currentSort={sp.sort}
-              searchParams={sp}
-              categoryIds={categoryIds}
-            />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+          <div className="relative h-full flex flex-col justify-center px-6 sm:px-10 text-white max-w-[600px]">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1">{activeCategory.name}</h1>
+            {activeCategory.description && (
+              <p className="text-sm sm:text-base text-white/80 line-clamp-2">{activeCategory.description}</p>
+            )}
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="mb-5 rounded-xl bg-gradient-to-r from-brand-700 to-brand-500 px-6 py-6 text-white">
+          <div className="flex items-center gap-3">
+            {activeCategory?.image_url && (
+              <img src={activeCategory.image_url} alt={activeCategory.name} className="w-12 h-12 rounded-lg bg-white/10 object-cover" />
+            )}
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">
+                {activeCategory ? activeCategory.name : "Tất cả sản phẩm Apple"}
+              </h1>
+              {activeCategory?.description && (
+                <p className="text-sm text-white/80 mt-0.5">{activeCategory.description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-category pills */}
+      {(childCategories.length > 0 || siblingCategories.length > 0) && (
+        <div className="flex gap-2 mb-5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {(childCategories.length > 0 ? childCategories : siblingCategories).map((c) => {
+            const isActive = activeCategory?.id === c.id;
+            let childPath: string;
+            if (childCategories.length > 0) {
+              childPath = `${basePath}/${c.slug}`;
+            } else {
+              childPath = `/san-pham/${slugPath.slice(0, -1).join("/")}${slugPath.length > 1 ? "/" : ""}${c.slug}`;
+            }
+            return (
+              <Link key={c.id} href={childPath}
+                className={`px-4 py-2.5 min-h-[44px] flex items-center rounded-md text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${isActive ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                {c.name}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Product grid — sidebar + mobile filter handled by layout */}
+      <ProductGrid
+        products={filtered}
+        totalCount={sp.condition ? filtered.length : totalCount}
+        currentPage={parseInt(sp.page || "1")}
+        perPage={PER_PAGE}
+        basePath={basePath}
+        currentSort={sp.sort}
+        searchParams={sp}
+        categoryIds={categoryIds}
+      />
     </div>
   );
 }
