@@ -96,7 +96,7 @@ export default function BlogPostGrid({ initialPosts, initialHasMore, categorySlu
 
         {/* Right: Sticky sidebar — categories + featured tags */}
         <div className="hidden lg:block lg:col-span-1">
-          <div className="sticky top-20 space-y-6">
+          <div className="sticky space-y-6" style={{ top: "var(--sticky-offset)" }}>
             {/* Góc Chọn & Mua */}
             {sidebarCategories && sidebarCategories.length > 0 && (
               <div>

@@ -149,7 +149,7 @@ export default function CartPage() {
 
           {/* ══ Right: Payment summary (1/3) ══ */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-gray-200 rounded-lg p-5 sticky top-[120px]">
+            <div className="bg-white border border-gray-200 rounded-lg p-5 sticky" style={{ top: "var(--sticky-offset)" }}>
               <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">
                 Thông tin thanh toán
               </h2>

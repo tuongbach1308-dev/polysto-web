@@ -77,7 +77,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ slu
 
           {/* ══ Sidebar — sticky ══ */}
           <aside className="hidden lg:block lg:col-span-1 order-2 lg:order-1">
-            <div className="sticky top-[120px] space-y-6">
+            <div className="sticky space-y-6" style={{ top: "var(--sticky-offset)" }}>
               {/* Blog category nav */}
               <nav className="space-y-0.5">
                 {BLOG_CATEGORIES.map((cat) => (

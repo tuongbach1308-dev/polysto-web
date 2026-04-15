@@ -33,7 +33,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
         {/* Sidebar */}
         <aside className="lg:col-span-1">
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden sticky top-[120px]">
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden sticky" style={{ top: "var(--sticky-offset)" }}>
             {/* User info */}
             <div className="p-5 border-b border-gray-200">
               <div className="flex items-center gap-3">

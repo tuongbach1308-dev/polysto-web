@@ -75,7 +75,7 @@ export default function CheckoutPage() {
           </div>
         </div>
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg border border-gray-200 p-5 sticky top-[140px]">
+          <div className="bg-white rounded-lg border border-gray-200 p-5 sticky" style={{ top: "var(--sticky-offset)" }}>
             <h2 className="text-sm font-semibold text-gray-900 mb-3">Đơn hàng ({cart.length})</h2>
             <div className="divide-y divide-gray-100 text-sm max-h-[300px] overflow-y-auto">
               {cart.map((item, i) => (

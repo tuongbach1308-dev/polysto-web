@@ -219,7 +219,7 @@ export default function ProductDetailClient({ product, variants, productImages =
 
           <div className="lg:col-span-1 space-y-4">
             {specEntries.length > 0 && (
-              <div className="bg-white border border-gray-200 rounded-lg p-5 sticky top-[120px] space-y-5">
+              <div className="bg-white border border-gray-200 rounded-lg p-5 sticky space-y-5" style={{ top: "var(--sticky-offset)" }}>
                 <div>
                   <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide mb-4">Thông số kỹ thuật</h2>
                   <div className="rounded-md border border-gray-200 overflow-hidden">{previewSpecs.map(([key, val], i) => (<div key={key} className={`text-sm ${i % 2 === 0 ? "bg-gray-50" : "bg-white"} px-3 py-2.5`}><p className="text-gray-500 text-xs">{key}</p><p className="text-gray-800 font-medium mt-0.5">{val}</p></div>))}</div>

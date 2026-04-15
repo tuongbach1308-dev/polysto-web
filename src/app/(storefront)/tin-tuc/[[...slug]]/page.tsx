@@ -78,7 +78,7 @@ export default async function BlogCatchAllPage({ params }: { params: Promise<{ s
 function Sidebar({ categories, activeCatId }: { categories: PostCategory[]; activeCatId?: string }) {
   return (
     <aside className="hidden lg:block lg:col-span-1">
-      <div className="sticky top-20 space-y-1">
+      <div className="sticky space-y-1" style={{ top: "var(--sticky-offset)" }}>
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Danh mục</h3>
         <Link href="/tin-tuc" className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${!activeCatId ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
           <Newspaper size={15} className={!activeCatId ? "text-brand-500" : "text-gray-400"} />
@@ -292,7 +292,7 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
 
           {/* Sidebar: categories + TOC */}
           <aside className="hidden lg:block lg:col-span-1">
-            <div className="sticky top-20 space-y-5">
+            <div className="sticky space-y-5" style={{ top: "var(--sticky-offset)" }}>
               <div className="space-y-1">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Danh mục</h3>
                 {childCats.map((cat: PostCategory) => {

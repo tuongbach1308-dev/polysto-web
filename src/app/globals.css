@@ -11,6 +11,11 @@
    ============================================ */
 
 :root {
+  /* Header heights — responsive sticky offsets */
+  --header-main: 52px;
+  --header-sticky: 52px;          /* mobile: only main header */
+  --sticky-offset: 60px;          /* mobile: header + 8px buffer */
+
   /* Brand Green palette */
   --color-brand-50: #eefbf3;
   --color-brand-100: #d6f5e2;
@@ -240,3 +245,18 @@ body {
 ::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+
+/* ============================================
+   Desktop: category bar adds 42px to sticky header
+   ============================================ */
+@media (min-width: 1024px) {
+  :root {
+    --header-sticky: 94px;
+    --sticky-offset: 100px;
+  }
+}
+
+/* Anchor scroll offset — prevents header from covering heading targets */
+[id]:is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: var(--sticky-offset);
+}
