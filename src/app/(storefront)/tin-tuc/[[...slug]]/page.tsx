@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import PostTOC from "@/components/PostTOC";
 import JsonLd from "@/components/JsonLd";
 import BlogPostGrid from "@/components/BlogPostGrid";
+import MostViewedSwiper from "@/components/MostViewedSwiper";
 import { buildArticleJsonLd, buildBreadcrumbJsonLd, buildPostMetadata } from "@/lib/seo";
 import type { Post } from "@/lib/database.types";
 import { Newspaper, MessageCircleQuestion, MonitorSmartphone, ThumbsUp, Lightbulb, Tag, Users } from "lucide-react";
@@ -107,17 +108,23 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
   const { data: featured } = await supabase.from("posts").select(POST_FIELDS).eq("status", "published").order("created_at", { ascending: false }).limit(4);
   const featuredIds = (featured || []).map((p) => p.id);
 
-  // Most viewed (exclude featured)
-  const { data: mostViewedRaw } = await supabase.from("posts").select("id, title, slug, thumbnail, created_at, view_count").eq("status", "published").order("view_count", { ascending: false }).limit(12);
-  const mostViewed = (mostViewedRaw || []).filter((p) => !featuredIds.includes(p.id)).slice(0, 6);
+  // Most viewed (exclude featured, max 10)
+  const { data: mostViewedRaw } = await supabase.from("posts").select("id, title, slug, thumbnail, created_at, view_count, reading_time").eq("status", "published").order("view_count", { ascending: false }).limit(14);
+  const mostViewed = (mostViewedRaw || []).filter((p) => !featuredIds.includes(p.id)).slice(0, 10);
 
-  // Latest posts for "load more" grid (skip first 4 featured)
-  const PER_PAGE = 9;
+  // Latest posts for 2-column "load more" (skip first 4 featured)
+  const PER_PAGE = 10;
   const { data: latestPosts, count: totalCount } = await supabase.from("posts")
     .select(POST_FIELDS, { count: "exact" }).eq("status", "published")
     .order("created_at", { ascending: false }).range(4, 4 + PER_PAGE - 1);
 
   const hasMore = (4 + PER_PAGE) < (totalCount || 0);
+
+  // Category icons for banner
+  const CAT_ICONS: Record<string, string> = {
+    "tin-cong-nghe": "📱", "danh-gia": "⭐", "tren-tay": "🤳",
+    "tu-van": "💡", "thu-thuat": "🔧", "khuyen-mai": "🎁",
+  };
 
   return (
     <div className="bg-surface min-h-screen">
@@ -126,22 +133,24 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <Sidebar categories={childCats} />
 
-          <div className="lg:col-span-3 space-y-10">
-            {/* Breadcrumb */}
+          <div className="lg:col-span-3 space-y-8">
             <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức" }]} />
 
-            {/* Mobile category pills */}
-            <div className="flex gap-2 overflow-x-auto lg:hidden -mt-4" style={{ scrollbarWidth: "none" }}>
-              <Link href="/tin-tuc" className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white flex-shrink-0">Tất cả</Link>
+            {/* ── Category banner — 1 dòng 6 cards ── */}
+            <section className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-6 lg:overflow-visible -mt-3" style={{ scrollbarWidth: "none" }}>
               {childCats.map((c) => (
-                <Link key={c.id} href={`/tin-tuc/${c.slug}`} className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white border border-gray-200 text-gray-600 flex-shrink-0 whitespace-nowrap">{c.name}</Link>
+                <Link key={c.id} href={`/tin-tuc/${c.slug}`}
+                  className="group flex-shrink-0 w-[100px] lg:w-auto flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-white border border-gray-100 hover:border-brand-300 hover:shadow-md transition-all text-center">
+                  <span className="text-2xl">{CAT_ICONS[c.slug] || "📄"}</span>
+                  <span className="text-[11px] font-semibold text-gray-700 group-hover:text-brand-600 transition-colors leading-tight">{c.name}</span>
+                </Link>
               ))}
-            </div>
+            </section>
 
-            {/* ── Hero featured ── */}
+            {/* ── Nổi bật nhất (was "Chủ đề hot") ── */}
             {featured && featured.length > 0 && (
               <section>
-                <SectionTitle title="Chủ đề hot" color="red" />
+                <SectionTitle title="Nổi bật nhất" color="red" />
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                   <Link href={`/tin-tuc/${featured[0].slug}`} className="lg:col-span-3 group relative min-h-[260px] lg:min-h-[340px] rounded-xl overflow-hidden bg-gray-100 block">
                     {featured[0].thumbnail ? <img src={featured[0].thumbnail} alt={featured[0].title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-brand-800" />}
@@ -169,31 +178,18 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
               </section>
             )}
 
-            {/* ── Most viewed ── */}
+            {/* ── Xem nhiều nhất — Swiper horizontal ── */}
             {mostViewed.length > 0 && (
               <section>
                 <SectionTitle title="Xem nhiều nhất" color="orange" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                  {mostViewed.map((p, i) => (
-                    <Link key={p.id} href={`/tin-tuc/${p.slug}`} className="group flex gap-3 items-start">
-                      <span className="text-2xl font-black text-gray-200 group-hover:text-brand-300 transition-colors leading-none flex-shrink-0 w-7 text-right">{i + 1}</span>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{p.title}</h3>
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-400">
-                          <span>{formatDate(p.created_at)}</span>
-                          {p.view_count > 0 && <span className="flex items-center gap-0.5"><Eye size={10} /> {p.view_count}</span>}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                <MostViewedSwiper posts={mostViewed} />
               </section>
             )}
 
-            {/* ── Latest posts with Load More ── */}
+            {/* ── Tin tức mới nhất — 2-column layout with Load More ── */}
             <section>
               <SectionTitle title="Tin tức mới nhất" />
-              <BlogPostGrid initialPosts={latestPosts || []} initialHasMore={hasMore} />
+              <BlogPostGrid initialPosts={latestPosts || []} initialHasMore={hasMore} layout="two-column" />
             </section>
           </div>
         </div>

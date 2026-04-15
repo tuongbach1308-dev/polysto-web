@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingButtons from "@/components/FloatingButtons";
 import JsonLd from "@/components/JsonLd";
+import ScrollToTop from "@/components/ScrollToTop";
 import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
@@ -49,6 +50,7 @@ export default async function StorefrontLayout({
       <main className="flex-1">{children}</main>
       <Footer settings={settings} />
       <FloatingButtons phone={settings.phone} zalo={settings.zalo} />
+      <ScrollToTop />
     </>
   );
 }

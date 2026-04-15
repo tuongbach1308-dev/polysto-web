@@ -13,7 +13,7 @@ import { buildProductJsonLd, buildBreadcrumbJsonLd, buildCollectionJsonLd, build
 
 export const revalidate = 60;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://polystore.vn";
-const PER_PAGE = 20;
+const PER_PAGE = 12;
 
 /** Resolve category chain from slug path */
 async function resolveCategoryChain(slugs: string[]): Promise<Category[]> {
