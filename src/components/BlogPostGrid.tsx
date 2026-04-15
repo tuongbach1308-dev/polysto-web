@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Clock, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
 
@@ -67,9 +68,9 @@ export default function BlogPostGrid({ initialPosts, initialHasMore, categorySlu
           <div className="space-y-5">
             {posts.map((post) => (
               <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 pb-5 border-b border-gray-100 last:border-0">
-                <div className="w-[140px] sm:w-[180px] flex-shrink-0 aspect-[16/10] rounded-lg overflow-hidden bg-gray-100">
+                <div className="w-[140px] sm:w-[180px] flex-shrink-0 aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 relative">
                   {post.thumbnail
-                    ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 140px, 180px" />
                     : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/20 font-black">POLY</span></div>}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -124,9 +125,9 @@ export default function BlogPostGrid({ initialPosts, initialHasMore, categorySlu
               <div className="space-y-3">
                 {posts.slice(0, 5).map((post) => (
                   <Link key={`trend-${post.id}`} href={`/tin-tuc/${post.slug}`} className="group flex gap-2.5">
-                    <div className="w-[60px] flex-shrink-0 aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    <div className="w-[60px] flex-shrink-0 aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
                       {post.thumbnail
-                        ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" loading="lazy" />
+                        ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover" sizes="60px" />
                         : <div className="w-full h-full bg-brand-700" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -165,9 +166,9 @@ export default function BlogPostGrid({ initialPosts, initialHasMore, categorySlu
 function PostCard({ post }: { post: PostItem }) {
   return (
     <Link href={`/tin-tuc/${post.slug}`} className="group block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-gray-100/80 transition-all duration-300">
-      <div className="aspect-[16/10] bg-gray-100 overflow-hidden">
+      <div className="aspect-[16/10] bg-gray-100 overflow-hidden relative">
         {post.thumbnail
-          ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
           : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/20 text-2xl font-black">POLY</span></div>}
       </div>
       <div className="p-4">

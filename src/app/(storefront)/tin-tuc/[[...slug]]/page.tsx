@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Home, Eye, Clock } from "lucide-react";
 import { notFound } from "next/navigation";
 import PostTOC from "@/components/PostTOC";
@@ -153,7 +154,7 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
                 <SectionTitle title="Nổi bật nhất" color="red" />
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                   <Link href={`/tin-tuc/${featured[0].slug}`} className="lg:col-span-3 group relative min-h-[260px] lg:min-h-[340px] rounded-xl overflow-hidden bg-gray-100 block">
-                    {featured[0].thumbnail ? <img src={featured[0].thumbnail} alt={featured[0].title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-brand-800" />}
+                    {featured[0].thumbnail ? <Image src={featured[0].thumbnail} alt={featured[0].title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 1024px) 100vw, 60vw" priority /> : <div className="absolute inset-0 bg-brand-800" />}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-5">
                       {featured[0].tags?.[0] && <span className="inline-block text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded mb-2">{featured[0].tags[0]}</span>}
@@ -164,8 +165,8 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
                   <div className="lg:col-span-2 grid grid-cols-1 gap-3">
                     {featured.slice(1, 4).map((p) => (
                       <Link key={p.id} href={`/tin-tuc/${p.slug}`} className="group flex gap-3">
-                        <div className="w-[110px] lg:w-[130px] flex-shrink-0 aspect-[16/10] rounded-lg overflow-hidden bg-gray-100">
-                          {p.thumbnail ? <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" /> : <div className="w-full h-full bg-brand-700" />}
+                        <div className="w-[110px] lg:w-[130px] flex-shrink-0 aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 relative">
+                          {p.thumbnail ? <Image src={p.thumbnail} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="130px" /> : <div className="w-full h-full bg-brand-700" />}
                         </div>
                         <div className="flex-1 min-w-0 py-0.5">
                           <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{p.title}</h3>
@@ -323,8 +324,8 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
             ]} />
 
             {(post.thumbnail as string) && (
-              <div className="rounded-xl overflow-hidden mt-4">
-                <img src={post.thumbnail as string} alt={post.title as string} className="w-full aspect-[2/1] object-cover" />
+              <div className="rounded-xl overflow-hidden mt-4 relative aspect-[2/1]">
+                <Image src={post.thumbnail as string} alt={post.title as string} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 75vw" priority />
               </div>
             )}
 
@@ -360,8 +361,8 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {relatedPosts.map((p) => (
                     <Link key={p.id} href={`/tin-tuc/${p.slug}`} className="group block">
-                      <div className="aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                        {p.thumbnail ? <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" /> : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/30 text-lg font-black">POLY</span></div>}
+                      <div className="aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 mb-2.5 relative">
+                        {p.thumbnail ? <Image src={p.thumbnail} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 100vw, 33vw" /> : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/30 text-lg font-black">POLY</span></div>}
                       </div>
                       <h4 className="text-[13px] font-semibold text-gray-700 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{p.title}</h4>
                       <p className="text-[11px] text-gray-400 mt-1">{formatDate(p.created_at)}</p>

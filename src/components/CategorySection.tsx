@@ -93,13 +93,13 @@ export default function CategorySection({ brandName, categoryName, categoryHref,
         </div>
       </div>
 
-      {/* Mobile sub pills */}
-      <div className="sm:hidden flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+      {/* Mobile sub pills — min 44px touch target */}
+      <div className="sm:hidden flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
         {subcategories.map((s, i) => (
           <button
             key={s.id}
             onClick={() => handleTabChange(i)}
-            className={`text-[12px] font-semibold px-3 py-1 rounded-md whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer ${
+            className={`text-[12px] font-semibold px-3 py-2.5 min-h-[44px] rounded-md whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer ${
               i === active ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600"
             }`}
           >

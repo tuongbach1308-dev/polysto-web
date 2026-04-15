@@ -50,5 +50,8 @@ export async function GET(request: NextRequest) {
 
   const { data: products } = await query;
 
-  return NextResponse.json({ products: products || [] });
+  return NextResponse.json(
+    { products: products || [] },
+    { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } }
+  );
 }

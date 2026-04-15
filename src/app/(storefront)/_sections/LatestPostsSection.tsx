@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 
@@ -31,10 +32,12 @@ export default async function LatestPostsSection() {
             <Link key={post.id as string} href={`/tin-tuc/${post.slug}`} className="group block flex-shrink-0 w-[260px] sm:w-[280px] lg:w-auto">
               <div className="relative aspect-[16/10] rounded-lg overflow-hidden">
                 {(post.thumbnail as string) ? (
-                  <img
+                  <Image
                     src={post.thumbnail as string}
                     alt={post.title as string}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 640px) 260px, 25vw"
                   />
                 ) : (
                   <div className="w-full h-full bg-brand-700 flex items-center justify-center">

@@ -395,7 +395,7 @@ function renderListing(
               }
               return (
                 <Link key={c.id} href={childPath}
-                  className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${isActive ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                  className={`px-4 py-2.5 min-h-[44px] flex items-center rounded-md text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${isActive ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                   {c.name}
                 </Link>
               );

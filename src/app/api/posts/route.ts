@@ -42,5 +42,8 @@ export async function GET(request: NextRequest) {
   const total = count || 0;
   const hasMore = page * limit < total;
 
-  return NextResponse.json({ posts: posts || [], hasMore, total, page });
+  return NextResponse.json(
+    { posts: posts || [], hasMore, total, page },
+    { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } }
+  );
 }

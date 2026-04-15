@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ShieldCheck, Truck, Award, Users, CreditCard, Headphones, Heart, Star, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Giới thiệu POLY Store",

@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -39,9 +40,9 @@ export default function MostViewedSwiper({ posts }: { posts: PostItem[] }) {
         {posts.map((post) => (
           <SwiperSlide key={post.id}>
             <Link href={`/tin-tuc/${post.slug}`} className="group block">
-              <div className="aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 mb-2.5">
+              <div className="aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 mb-2.5 relative">
                 {post.thumbnail
-                  ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                  ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 480px) 66vw, (max-width: 768px) 43vw, 25vw" />
                   : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/20 text-lg font-black">POLY</span></div>}
               </div>
               <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{post.title}</h3>
