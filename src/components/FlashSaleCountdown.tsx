@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Zap } from "lucide-react";
 import { formatPrice } from "@/lib/format";
+import { useNow } from "@/lib/countdown";
 
 interface FlashSaleCountdownProps {
   salePrice: number;
@@ -21,29 +22,20 @@ export default function FlashSaleCountdown({
   saleEndsAt,
   saleStartsAt,
 }: FlashSaleCountdownProps) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [expired, setExpired] = useState(false);
+  const now = useNow();
+  const endMs = useMemo(() => new Date(saleEndsAt).getTime(), [saleEndsAt]);
+  const diff = endMs - now;
+  const expired = diff <= 0;
 
-  useEffect(() => {
-    function calc() {
-      const now = Date.now();
-      const end = new Date(saleEndsAt).getTime();
-      const diff = end - now;
-      if (diff <= 0) {
-        setExpired(true);
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    }
-    calc();
-    const interval = setInterval(calc, 1000);
-    return () => clearInterval(interval);
-  }, [saleEndsAt]);
+  const timeLeft = useMemo(() => {
+    if (expired) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      days: Math.floor(diff / 86400000),
+      hours: Math.floor((diff % 86400000) / 3600000),
+      minutes: Math.floor((diff % 3600000) / 60000),
+      seconds: Math.floor((diff % 60000) / 1000),
+    };
+  }, [diff, expired]);
 
   if (expired) return null;
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import { SkeletonProductGrid } from "@/components/Skeleton";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/database.types";
 import { Grid3X3, List, ChevronLeft, ChevronRight, Package } from "lucide-react";
@@ -15,6 +16,7 @@ interface Props {
   basePath: string;
   currentSort?: string;
   searchParams: Record<string, string | undefined>;
+  categoryIds?: string[];
 }
 
 const SORT_OPTIONS = [
@@ -23,8 +25,15 @@ const SORT_OPTIONS = [
   { label: "Giá giảm dần", value: "price-desc" },
 ];
 
-export default function ProductGrid({ products, totalCount, currentPage, perPage, basePath, currentSort, searchParams }: Props) {
+export default function ProductGrid({ products: initialProducts, totalCount: initialTotal, currentPage: initialPage, perPage, basePath, currentSort: initialSort, searchParams, categoryIds }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [products, setProducts] = useState(initialProducts);
+  const [totalCount, setTotalCount] = useState(initialTotal);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [currentSort, setCurrentSort] = useState(initialSort);
+  const [loading, setLoading] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+
   const totalPages = Math.ceil(totalCount / perPage);
 
   function buildUrl(overrides: Record<string, string | null>) {
@@ -35,8 +44,59 @@ export default function ProductGrid({ products, totalCount, currentPage, perPage
     return `${basePath}${qs ? `?${qs}` : ""}`;
   }
 
+  /** Fetch products client-side and update state */
+  const fetchProducts = useCallback(async (page: number, sort?: string) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (categoryIds && categoryIds.length > 0) params.set("categoryIds", categoryIds.join(","));
+      if (searchParams.price) params.set("price", searchParams.price);
+      if (searchParams.q) params.set("q", searchParams.q);
+      if (searchParams.condition) params.set("condition", searchParams.condition);
+      params.set("page", String(page));
+      params.set("limit", String(perPage));
+      const s = sort || currentSort;
+      if (s && s !== "newest") params.set("sort", s);
+
+      const res = await fetch(`/api/products?${params.toString()}`);
+      const data = await res.json();
+
+      setProducts(data.products || []);
+      setTotalCount(data.total || 0);
+      setCurrentPage(page);
+      if (sort !== undefined) setCurrentSort(sort);
+
+      // Update URL without triggering navigation
+      const urlOverrides: Record<string, string | null> = {
+        page: page === 1 ? null : String(page),
+      };
+      if (sort !== undefined) {
+        urlOverrides.sort = sort === "newest" ? null : sort;
+      }
+      const newUrl = buildUrl(urlOverrides);
+      window.history.pushState(null, "", newUrl);
+
+      // Scroll grid into view
+      gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      // On error, fall back to page navigation
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryIds, searchParams, perPage, currentSort, basePath]);
+
+  function handlePageClick(e: React.MouseEvent, page: number) {
+    e.preventDefault();
+    if (page === currentPage || loading) return;
+    fetchProducts(page);
+  }
+
+  function handleSortChange(sort: string) {
+    fetchProducts(1, sort);
+  }
+
   return (
-    <div>
+    <div ref={gridRef} style={{ scrollMarginTop: "var(--sticky-offset)" }}>
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <p className="text-sm text-gray-500">
@@ -47,7 +107,7 @@ export default function ProductGrid({ products, totalCount, currentPage, perPage
           {/* Sort */}
           <select
             value={currentSort || "newest"}
-            onChange={(e) => { window.location.href = buildUrl({ sort: e.target.value === "newest" ? null : e.target.value, page: null }); }}
+            onChange={(e) => handleSortChange(e.target.value)}
             className="text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:border-brand-500"
           >
             {SORT_OPTIONS.map((o) => (
@@ -69,8 +129,10 @@ export default function ProductGrid({ products, totalCount, currentPage, perPage
         </div>
       </div>
 
-      {/* Products */}
-      {products.length === 0 ? (
+      {/* Products or Skeleton */}
+      {loading ? (
+        <SkeletonProductGrid count={perPage} />
+      ) : products.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-lg py-16 text-center">
           <Package className="mx-auto text-gray-200 mb-4" size={48} />
           <p className="text-sm text-gray-500 mb-4">Không tìm thấy sản phẩm phù hợp.</p>
@@ -109,13 +171,13 @@ export default function ProductGrid({ products, totalCount, currentPage, perPage
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination — renders as <a> for SEO, intercepts click for client-side fetch */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-1.5 mt-8">
           {currentPage > 1 && (
-            <Link href={buildUrl({ page: String(currentPage - 1) })} className="w-9 h-9 flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 transition-colors">
+            <a href={buildUrl({ page: String(currentPage - 1) })} onClick={(e) => handlePageClick(e, currentPage - 1)} className="w-9 h-9 flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 transition-colors">
               <ChevronLeft size={16} />
-            </Link>
+            </a>
           )}
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
@@ -128,16 +190,16 @@ export default function ProductGrid({ products, totalCount, currentPage, perPage
               p === "..." ? (
                 <span key={`dot-${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm">...</span>
               ) : (
-                <Link key={p} href={buildUrl({ page: p === 1 ? null : String(p) })}
+                <a key={p} href={buildUrl({ page: p === 1 ? null : String(p) })} onClick={(e) => handlePageClick(e, p as number)}
                   className={`w-9 h-9 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${p === currentPage ? "bg-brand-600 text-white" : "border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600"}`}>
                   {p}
-                </Link>
+                </a>
               )
             )}
           {currentPage < totalPages && (
-            <Link href={buildUrl({ page: String(currentPage + 1) })} className="w-9 h-9 flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 transition-colors">
+            <a href={buildUrl({ page: String(currentPage + 1) })} onClick={(e) => handlePageClick(e, currentPage + 1)} className="w-9 h-9 flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 transition-colors">
               <ChevronRight size={16} />
-            </Link>
+            </a>
           )}
         </div>
       )}

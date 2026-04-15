@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/lib/database.types";
+import { useCountdownTo } from "@/lib/countdown";
 
 interface HotSaleConfig {
   enabled?: string;
@@ -14,45 +14,12 @@ interface HotSaleConfig {
   end?: string;
 }
 
-function useCountdown(endDate?: string) {
-  const [target] = useState(() => {
-    if (endDate) {
-      const d = new Date(endDate);
-      if (!isNaN(d.getTime())) return d;
-    }
-    // Fallback: end of current week (Sunday 23:59:59)
-    const now = new Date();
-    const end = new Date(now);
-    end.setDate(now.getDate() + (7 - now.getDay()));
-    end.setHours(23, 59, 59, 999);
-    return end;
-  });
-  const [left, setLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
-
-  useEffect(() => {
-    function calc() {
-      const diff = Math.max(0, target.getTime() - Date.now());
-      setLeft({
-        d: Math.floor(diff / 86400000),
-        h: Math.floor((diff % 86400000) / 3600000),
-        m: Math.floor((diff % 3600000) / 60000),
-        s: Math.floor((diff % 60000) / 1000),
-      });
-    }
-    calc();
-    const id = setInterval(calc, 1000);
-    return () => clearInterval(id);
-  }, [target]);
-
-  return left;
-}
-
 function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
 export default function HotSale({ products, config }: { products: Product[]; config?: HotSaleConfig }) {
-  const countdown = useCountdown(config?.end);
+  const countdown = useCountdownTo(config?.end);
 
   // Hidden if disabled or no products
   if (config?.enabled === "false") return null;

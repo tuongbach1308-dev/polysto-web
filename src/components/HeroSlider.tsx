@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
 import { ChevronLeft, ChevronRight, BadgeCheck, Shield, ThumbsUp } from "lucide-react";
@@ -66,7 +67,7 @@ export default function HeroSlider({ banners: bannersProp }: { banners?: HeroBan
               <a href={b.href} className="block relative text-white overflow-hidden">
                 {/* Background: image or gradient fallback */}
                 {b.image ? (
-                  <img src={b.image} alt={b.badge || b.title} className="absolute inset-0 w-full h-full object-cover" />
+                  <Image src={b.image} alt={b.badge || b.title} fill className="object-cover" sizes="(max-width: 1200px) 100vw, 1200px" priority={i === 0} />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500" />
                 )}

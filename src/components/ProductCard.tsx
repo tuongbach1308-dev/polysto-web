@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/format";
@@ -9,6 +9,7 @@ import { ShoppingCart, Heart, Zap } from "lucide-react";
 import QuickView from "@/components/QuickView";
 import { isLoggedIn, isInWishlist, toggleWishlist } from "@/lib/auth";
 import { getConditionBadge, getDisplayPrice, getCompareAtPrice, getDiscountPercent, isOnSale } from "@/lib/products";
+import { useNow, formatCountdown } from "@/lib/countdown";
 
 function getCategoryTags(title: string): { name: string; slug: string }[] {
   const tags: { name: string; slug: string }[] = [];
@@ -53,24 +54,12 @@ export default function ProductCard({ product, categoryTags: propTags }: CardPro
   const categoryTags = propTags || getCategoryTags(product.title);
   const onSale = isOnSale(product);
 
-  // Mini countdown for flash sale cards
-  const [countdown, setCountdown] = useState("");
-  useEffect(() => {
-    if (!onSale || !product.sale_ends_at) return;
-    function calc() {
-      const diff = new Date(product.sale_ends_at!).getTime() - Date.now();
-      if (diff <= 0) { setCountdown(""); return; }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      const pad = (n: number) => String(n).padStart(2, "0");
-      setCountdown(d > 0 ? `${d}N ${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h)}:${pad(m)}:${pad(s)}`);
-    }
-    calc();
-    const t = setInterval(calc, 1000);
-    return () => clearInterval(t);
-  }, [onSale, product.sale_ends_at]);
+  // Mini countdown for flash sale cards — shared single timer
+  const now = useNow();
+  const countdown = useMemo(() => {
+    if (!onSale || !product.sale_ends_at) return "";
+    return formatCountdown(new Date(product.sale_ends_at).getTime(), now);
+  }, [onSale, product.sale_ends_at, now]);
 
   return (
     <>

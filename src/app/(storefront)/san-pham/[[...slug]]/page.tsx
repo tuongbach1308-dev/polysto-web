@@ -239,7 +239,7 @@ export default async function ProductPage({ params, searchParams }: {
   if (productIds !== null) {
     if (productIds.length === 0) {
       // No products in category
-      return renderListing([], 0, activeCategory, chain, childCategories || [], allCategories || [], slugPath, sp);
+      return renderListing([], 0, activeCategory, chain, childCategories || [], allCategories || [], slugPath, sp, categoryIds);
     }
     query = query.in("id", productIds);
   }
@@ -273,7 +273,7 @@ export default async function ProductPage({ params, searchParams }: {
 
   const { data: products, count } = await query;
 
-  return renderListing(products || [], count || 0, activeCategory, chain, childCategories || [], allCategories || [], slugPath, sp);
+  return renderListing(products || [], count || 0, activeCategory, chain, childCategories || [], allCategories || [], slugPath, sp, categoryIds);
 }
 
 function renderListing(
@@ -284,7 +284,8 @@ function renderListing(
   childCategories: Category[],
   allCategories: Category[],
   slugPath: string[],
-  sp: { price?: string; sort?: string; page?: string; condition?: string; q?: string }
+  sp: { price?: string; sort?: string; page?: string; condition?: string; q?: string },
+  categoryIds?: string[]
 ) {
   const basePath = `/san-pham${slugPath.length > 0 ? "/" + slugPath.join("/") : ""}`;
 
@@ -437,6 +438,7 @@ function renderListing(
               basePath={basePath}
               currentSort={sp.sort}
               searchParams={sp}
+              categoryIds={categoryIds}
             />
           </div>
         </div>

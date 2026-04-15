@@ -38,7 +38,7 @@ export default function PromoBanner({ products, banners }: { products: Product[]
                   href={b.href || "#"}
                   className="block rounded-lg overflow-hidden h-[200px] relative hover:shadow-md transition-shadow"
                 >
-                  <img src={b.image} alt={b.alt || ""} className="w-full h-full object-cover" />
+                  <Image src={b.image} alt={b.alt || ""} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                 </Link>
               </SwiperSlide>
             ))}
