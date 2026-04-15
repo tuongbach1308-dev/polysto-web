@@ -7,7 +7,6 @@ export default function BlogLoading() {
   const pathname = usePathname();
   const segments = pathname.replace(/^\/tin-tuc\/?/, "").split("/").filter(Boolean);
 
-  // Heuristic: post slugs have 3+ hyphens, category slugs are short
   const lastSegment = segments[segments.length - 1] || "";
   const hyphenCount = (lastSegment.match(/-/g) || []).length;
   const isDetail = segments.length > 0 && hyphenCount >= 3;
@@ -16,23 +15,16 @@ export default function BlogLoading() {
   return <ListingSkeleton />;
 }
 
-/** Skeleton: listing with sidebar */
+/** Listing skeleton — no sidebar skeleton, only content area */
 function ListingSkeleton() {
   return (
     <div className="bg-surface min-h-screen">
       <div className="max-w-[1200px] mx-auto px-4 py-5">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <aside className="hidden lg:block lg:col-span-1">
-            <div className="space-y-1">
-              <SkeletonBox className="h-3 w-16 mb-3" />
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SkeletonBox key={i} className="h-9 w-full rounded-lg" />
-              ))}
-            </div>
-          </aside>
+          {/* Sidebar — empty space holder, no skeleton */}
+          <aside className="hidden lg:block lg:col-span-1" />
 
-          {/* Content */}
+          {/* Content — only this area shows skeleton */}
           <div className="lg:col-span-3 space-y-8">
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5">
@@ -81,29 +73,16 @@ function ListingSkeleton() {
   );
 }
 
-/** Skeleton: post detail with sidebar */
+/** Post detail skeleton — no sidebar skeleton, only content area */
 function PostDetailSkeleton() {
   return (
     <div className="bg-surface min-h-screen">
       <div className="max-w-[1200px] mx-auto px-4 py-5">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <aside className="hidden lg:block lg:col-span-1">
-            <div className="space-y-1">
-              <SkeletonBox className="h-3 w-16 mb-3" />
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SkeletonBox key={i} className="h-9 w-full rounded-lg" />
-              ))}
-              <div className="border-t border-gray-200 pt-4 mt-4 space-y-2">
-                <SkeletonBox className="h-3 w-24" />
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <SkeletonBox key={i} className="h-3 w-full" />
-                ))}
-              </div>
-            </div>
-          </aside>
+          {/* Sidebar — empty space holder, no skeleton */}
+          <aside className="hidden lg:block lg:col-span-1" />
 
-          {/* Content */}
+          {/* Content — only this area shows skeleton */}
           <div className="lg:col-span-3">
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 mb-4">

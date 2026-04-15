@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
-import type { Product, Post, Category } from "@/lib/database.types";
+import type { Product, Category } from "@/lib/database.types";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import ProductGrid from "@/components/ProductGrid";
 import SidebarFilter from "@/components/SidebarFilter";
 import MobileFilter from "@/components/MobileFilter";
 import JsonLd from "@/components/JsonLd";
+import { SkeletonBox, SkeletonProductCard } from "@/components/Skeleton";
 import { buildProductJsonLd, buildBreadcrumbJsonLd, buildCollectionJsonLd, buildProductMetadata, buildCategoryMetadata } from "@/lib/seo";
+import RelatedProducts from "./_components/RelatedProducts";
+import RelatedPosts from "./_components/RelatedPosts";
 
 export const revalidate = 60;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://polystore.vn";
@@ -128,28 +132,7 @@ export default async function ProductPage({ params, searchParams }: {
         ? await supabase.from("brands").select("*").eq("id", product.brand_id).maybeSingle()
         : { data: null };
 
-      // Related products from the leaf category
-      let relatedProducts: Product[] = [];
       const leafCat = catChain.length > 0 ? catChain[catChain.length - 1] : null;
-      if (leafCat) {
-        const { data: relPc } = await supabase.from("product_categories").select("product_id").eq("category_id", leafCat.id);
-        if (relPc?.length) {
-          const ids = relPc.map((r: { product_id: string }) => r.product_id).filter((id: string) => id !== product.id);
-          if (ids.length > 0) {
-            const { data: rel } = await supabase.from("products").select("*").in("id", ids).in("status", ["active", "out_of_stock"]).limit(10);
-            if (rel) relatedProducts = rel;
-          }
-        }
-      }
-
-      // Related posts
-      let relatedPosts: Post[] = [];
-      const keywords = product.title.split(/[\s|]+/).filter((w: string) => w.length > 3).slice(0, 3);
-      if (keywords.length > 0) {
-        const orFilter = keywords.map((kw: string) => `title.ilike.%${kw}%`).join(",");
-        const { data: posts } = await supabase.from("posts").select("*").eq("status", "published").or(orFilter).limit(3);
-        if (posts?.length) relatedPosts = posts as Post[];
-      }
 
       // Build breadcrumb links: Thương hiệu → danh mục cha → ... → danh mục lá
       // If root category slug matches brand slug, drop it to avoid duplication.
@@ -188,7 +171,34 @@ export default async function ProductPage({ params, searchParams }: {
         <div className="bg-surface min-h-screen">
           <JsonLd data={productJsonLd} />
           <JsonLd data={productBreadcrumb} />
-          <ProductDetailClient product={product} variants={variants || []} productImages={productImages || []} relatedProducts={relatedProducts} relatedPosts={relatedPosts} categoryChain={categoryChain} brandName={brand?.name || null} conditionLabel={product.condition ? ({ seal: "Nguyên Seal", openbox: "Open Box", new_nobox: "New Nobox", likenew: "Like New", old: "Cũ" } as Record<string, string>)[product.condition] || null : null} />
+          {/* Core product detail — loads first */}
+          <ProductDetailClient product={product} variants={variants || []} productImages={productImages || []} relatedProducts={[]} relatedPosts={[]} categoryChain={categoryChain} brandName={brand?.name || null} conditionLabel={product.condition ? ({ seal: "Nguyên Seal", openbox: "Open Box", new_nobox: "New Nobox", likenew: "Like New", old: "Cũ" } as Record<string, string>)[product.condition] || null : null} />
+
+          {/* Related products — streams independently */}
+          <Suspense fallback={
+            <section className="max-w-[1200px] mx-auto px-4 py-6">
+              <SkeletonBox className="h-5 w-40 mb-4" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)}
+              </div>
+            </section>
+          }>
+            <RelatedProducts productId={product.id} leafCategoryId={leafCat?.id || null} />
+          </Suspense>
+
+          {/* Related posts — streams independently */}
+          <Suspense fallback={
+            <section className="max-w-[1200px] mx-auto px-4 pb-8">
+              <SkeletonBox className="h-5 w-40 mb-4" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i}><SkeletonBox className="aspect-[16/10] rounded-lg mb-2" /><SkeletonBox className="h-4 w-full" /><SkeletonBox className="h-3 w-24 mt-1.5" /></div>
+                ))}
+              </div>
+            </section>
+          }>
+            <RelatedPosts productTitle={product.title} />
+          </Suspense>
         </div>
       );
     }

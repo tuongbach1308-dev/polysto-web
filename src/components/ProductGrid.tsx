@@ -75,9 +75,6 @@ export default function ProductGrid({ products: initialProducts, totalCount: ini
       }
       const newUrl = buildUrl(urlOverrides);
       window.history.pushState(null, "", newUrl);
-
-      // Scroll grid into view
-      gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
       // On error, fall back to page navigation
     } finally {
@@ -88,10 +85,13 @@ export default function ProductGrid({ products: initialProducts, totalCount: ini
   function handlePageClick(e: React.MouseEvent, page: number) {
     e.preventDefault();
     if (page === currentPage || loading) return;
+    // Scroll FIRST, then show skeleton + fetch
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     fetchProducts(page);
   }
 
   function handleSortChange(sort: string) {
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     fetchProducts(1, sort);
   }
 
