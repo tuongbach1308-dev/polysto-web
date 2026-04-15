@@ -28,7 +28,7 @@ export default async function RelatedPosts({ productTitle }: Props) {
   if (!posts || posts.length === 0) return null;
 
   return (
-    <section className="max-w-[1200px] mx-auto px-4 pb-8">
+    <section className="px-4 pb-8">
       <h2 className="text-base font-bold text-gray-900 mb-4">Bài viết liên quan</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {(posts as Post[]).map((post) => (

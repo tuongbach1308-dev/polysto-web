@@ -174,31 +174,33 @@ export default async function ProductPage({ params, searchParams }: {
           {/* Core product detail — loads first */}
           <ProductDetailClient product={product} variants={variants || []} productImages={productImages || []} relatedProducts={[]} relatedPosts={[]} categoryChain={categoryChain} brandName={brand?.name || null} conditionLabel={product.condition ? ({ seal: "Nguyên Seal", openbox: "Open Box", new_nobox: "New Nobox", likenew: "Like New", old: "Cũ" } as Record<string, string>)[product.condition] || null : null} />
 
-          {/* Related products — streams independently */}
-          <Suspense fallback={
-            <section className="max-w-[1200px] mx-auto px-4 py-6">
-              <SkeletonBox className="h-5 w-40 mb-4" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)}
+          {/* Related products — streams after core detail loads */}
+          <div className="max-w-[1200px] mx-auto">
+            <Suspense fallback={
+              <div className="px-4 py-6">
+                <SkeletonBox className="h-5 w-40 mb-4" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)}
+                </div>
               </div>
-            </section>
-          }>
-            <RelatedProducts productId={product.id} leafCategoryId={leafCat?.id || null} />
-          </Suspense>
+            }>
+              <RelatedProducts productId={product.id} leafCategoryId={leafCat?.id || null} />
+            </Suspense>
 
-          {/* Related posts — streams independently */}
-          <Suspense fallback={
-            <section className="max-w-[1200px] mx-auto px-4 pb-8">
-              <SkeletonBox className="h-5 w-40 mb-4" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i}><SkeletonBox className="aspect-[16/10] rounded-lg mb-2" /><SkeletonBox className="h-4 w-full" /><SkeletonBox className="h-3 w-24 mt-1.5" /></div>
-                ))}
+            {/* Related posts — streams after core detail loads */}
+            <Suspense fallback={
+              <div className="px-4 pb-8">
+                <SkeletonBox className="h-5 w-40 mb-4" />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i}><SkeletonBox className="aspect-[16/10] rounded-lg mb-2" /><SkeletonBox className="h-4 w-full" /><SkeletonBox className="h-3 w-24 mt-1.5" /></div>
+                  ))}
+                </div>
               </div>
-            </section>
-          }>
-            <RelatedPosts productTitle={product.title} />
-          </Suspense>
+            }>
+              <RelatedPosts productTitle={product.title} />
+            </Suspense>
+          </div>
         </div>
       );
     }

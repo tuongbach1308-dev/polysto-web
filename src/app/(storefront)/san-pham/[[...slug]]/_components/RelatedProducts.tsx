@@ -33,5 +33,9 @@ export default async function RelatedProducts({ productId, leafCategoryId }: Pro
 
   if (!products || products.length === 0) return null;
 
-  return <ProductCarousel products={products as Product[]} title="Sản phẩm liên quan" />;
+  return (
+    <section className="px-4 py-6">
+      <ProductCarousel products={products as Product[]} title="Sản phẩm liên quan" />
+    </section>
+  );
 }

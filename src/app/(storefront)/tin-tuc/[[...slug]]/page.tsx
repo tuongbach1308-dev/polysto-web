@@ -3,26 +3,18 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Home, Eye, Clock } from "lucide-react";
+import { ChevronRight, Home } from "lucide-react";
 import { notFound } from "next/navigation";
-import PostTOC from "@/components/PostTOC";
 import JsonLd from "@/components/JsonLd";
 import BlogPostGrid from "@/components/BlogPostGrid";
 import MostViewedSwiper from "@/components/MostViewedSwiper";
 import { buildArticleJsonLd, buildBreadcrumbJsonLd, buildPostMetadata } from "@/lib/seo";
 import type { Post } from "@/lib/database.types";
-import { Newspaper, MessageCircleQuestion, MonitorSmartphone, ThumbsUp, Lightbulb, Tag, Users } from "lucide-react";
-
 export const revalidate = 60;
 
 interface PostCategory { id: string; name: string; slug: string; description: string | null; parent_id: string | null; sort_order: number }
 type PostRow = Record<string, unknown>;
 const POST_FIELDS = "id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time, tags";
-
-const SIDEBAR_ICONS: Record<string, typeof Newspaper> = {
-  "tin-cong-nghe": Newspaper, "tu-van": MessageCircleQuestion, "tren-tay": MonitorSmartphone,
-  "danh-gia": ThumbsUp, "thu-thuat": Lightbulb, "khuyen-mai": Tag, "tuyen-dung": Users,
-};
 
 async function resolveCategory(slug: string) {
   const supabase = await createClient();
@@ -74,34 +66,6 @@ export default async function BlogCatchAllPage({ params }: { params: Promise<{ s
 }
 
 // ════════════════════════════════════════════════════════════
-// SIDEBAR (shared by all listing/detail views)
-// ════════════════════════════════════════════════════════════
-function Sidebar({ categories, activeCatId }: { categories: PostCategory[]; activeCatId?: string }) {
-  return (
-    <aside className="hidden lg:block lg:col-span-1">
-      <div className="sticky space-y-1" style={{ top: "var(--sticky-offset)" }}>
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Danh mục</h3>
-        <Link href="/tin-tuc" className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${!activeCatId ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
-          <Newspaper size={15} className={!activeCatId ? "text-brand-500" : "text-gray-400"} />
-          Tất cả
-        </Link>
-        {categories.map((cat) => {
-          const Icon = SIDEBAR_ICONS[cat.slug] || Newspaper;
-          const active = cat.id === activeCatId;
-          return (
-            <Link key={cat.id} href={`/tin-tuc/${cat.slug}`}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${active ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
-              <Icon size={15} className={active ? "text-brand-500" : "text-gray-400"} />
-              {cat.name}
-            </Link>
-          );
-        })}
-      </div>
-    </aside>
-  );
-}
-
-// ════════════════════════════════════════════════════════════
 // MAIN LISTING (/tin-tuc) — Magazine layout
 // ════════════════════════════════════════════════════════════
 async function renderMainListing(supabase: Awaited<ReturnType<typeof createClient>>, childCats: PostCategory[]) {
@@ -128,14 +92,9 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
   };
 
   return (
-    <div className="bg-surface min-h-screen">
+    <div className="space-y-8">
       <JsonLd data={buildBreadcrumbJsonLd([{ name: "Trang chủ", url: "/" }, { name: "Tin tức", url: "/tin-tuc" }])} />
-      <div className="max-w-[1200px] mx-auto px-4 py-5">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <Sidebar categories={childCats} />
-
-          <div className="lg:col-span-3 space-y-8">
-            <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức" }]} />
+      <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức" }]} />
 
             {/* ── Category banner — 1 dòng 6 cards ── */}
             <section className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-6 lg:overflow-visible -mt-3" style={{ scrollbarWidth: "none" }}>
@@ -197,15 +156,12 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
                 sidebarCategories={childCats.map(c => ({ name: c.name, slug: c.slug }))}
               />
             </section>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════
-// CATEGORY LISTING (/tin-tuc/[slug]) — Sidebar + 3-col grid + load more
+// CATEGORY LISTING (/tin-tuc/[slug]) — 3-col grid + load more
 // ════════════════════════════════════════════════════════════
 async function renderCategoryListing(supabase: Awaited<ReturnType<typeof createClient>>, activeCat: PostCategory, childCats: PostCategory[]) {
   const { data: ppcs } = await supabase.from("post_post_categories").select("post_id").eq("category_id", activeCat.id);
@@ -224,14 +180,9 @@ async function renderCategoryListing(supabase: Awaited<ReturnType<typeof createC
   }
 
   return (
-    <div className="bg-surface min-h-screen">
+    <div className="space-y-6">
       <JsonLd data={buildBreadcrumbJsonLd([{ name: "Trang chủ", url: "/" }, { name: "Tin tức", url: "/tin-tuc" }, { name: activeCat.name, url: `/tin-tuc/${activeCat.slug}` }])} />
-      <div className="max-w-[1200px] mx-auto px-4 py-5">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <Sidebar categories={childCats} activeCatId={activeCat.id} />
-
-          <div className="lg:col-span-3 space-y-6">
-            <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức", href: "/tin-tuc" }, { label: activeCat.name }]} />
+      <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức", href: "/tin-tuc" }, { label: activeCat.name }]} />
 
             {/* Mobile category pills */}
             <div className="flex gap-2 overflow-x-auto lg:hidden" style={{ scrollbarWidth: "none" }}>
@@ -251,22 +202,16 @@ async function renderCategoryListing(supabase: Awaited<ReturnType<typeof createC
             </div>
 
             {/* Posts grid + load more */}
-            <BlogPostGrid initialPosts={posts as any[]} initialHasMore={hasMore} categorySlug={activeCat.slug} />
-          </div>
-        </div>
-      </div>
+      <BlogPostGrid initialPosts={posts as any[]} initialHasMore={hasMore} categorySlug={activeCat.slug} />
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════
-// POST DETAIL — Sidebar categories + TOC
+// POST DETAIL — content only (sidebar in layout)
 // ════════════════════════════════════════════════════════════
 async function renderPostDetail(post: PostRow, slugPath: string[]) {
   const supabase = await createClient();
-
-  const { data: allPostCats } = await supabase.from("post_categories").select("*").order("sort_order");
-  const childCats = (allPostCats || []).filter((c: PostCategory) => c.parent_id !== null);
 
   const { data: relatedPosts } = await supabase.from("posts")
     .select("id, title, slug, thumbnail, created_at, reading_time")
@@ -285,38 +230,10 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
   breadcrumbItems.push({ name: post.title as string, url: `/tin-tuc/${slugPath.join("/")}` });
 
   return (
-    <div className="bg-surface min-h-screen">
+    <div>
       <JsonLd data={buildArticleJsonLd({ post: post as unknown as Post, url: `/tin-tuc/${slugPath.join("/")}` })} />
       <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
-      <div className="max-w-[1200px] mx-auto px-4 py-5">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-          {/* Sidebar: categories + TOC */}
-          <aside className="hidden lg:block lg:col-span-1">
-            <div className="sticky space-y-5" style={{ top: "var(--sticky-offset)" }}>
-              <div className="space-y-1">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Danh mục</h3>
-                {childCats.map((cat: PostCategory) => {
-                  const Icon = SIDEBAR_ICONS[cat.slug] || Newspaper;
-                  const active = postCat?.id === cat.id;
-                  return (
-                    <Link key={cat.id} href={`/tin-tuc/${cat.slug}`}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${active ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
-                      <Icon size={15} className={active ? "text-brand-500" : "text-gray-400"} />
-                      {cat.name}
-                    </Link>
-                  );
-                })}
-              </div>
-              <div className="border-t border-gray-200 pt-4">
-                <PostTOC />
-              </div>
-            </div>
-          </aside>
-
-          {/* Content */}
-          <div className="lg:col-span-3">
-            <Breadcrumb items={[
+      <Breadcrumb items={[
               { label: "Trang chủ", href: "/" },
               { label: "Tin tức", href: "/tin-tuc" },
               ...(postCat ? [{ label: postCat.name, href: `/tin-tuc/${postCat.slug}` }] : []),
@@ -371,9 +288,6 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
