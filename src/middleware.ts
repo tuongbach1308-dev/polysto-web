@@ -43,33 +43,37 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Maintenance mode check ──
-  // Skip for API routes and static assets
+  // Skip for API routes, static assets, and when service key is missing
   const pathname = request.nextUrl.pathname;
-  if (!pathname.startsWith("/api") && !pathname.startsWith("/_next")) {
-    const adminClient = createAdminClient(
-      internalUrl,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    const { data: setting } = await adminClient
-      .from("site_settings")
-      .select("value")
-      .eq("key", "disabled_pages")
-      .single();
-
-    if (setting?.value && Array.isArray(setting.value) && setting.value.length > 0) {
-      const disabledPages: string[] = setting.value;
-      const isDisabled = disabledPages.some((dp) =>
-        dp === "/"
-          ? pathname === "/"
-          : pathname === dp || pathname.startsWith(dp + "/")
+  if (!pathname.startsWith("/api") && !pathname.startsWith("/_next") && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const adminClient = createAdminClient(
+        internalUrl,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
       );
+      const { data: setting } = await adminClient
+        .from("site_settings")
+        .select("value")
+        .eq("key", "disabled_pages")
+        .single();
 
-      if (isDisabled) {
-        return new NextResponse(maintenanceHtml(pathname), {
-          status: 503,
-          headers: { "Content-Type": "text/html; charset=utf-8", "Retry-After": "3600" },
-        });
+      if (setting?.value && Array.isArray(setting.value) && setting.value.length > 0) {
+        const disabledPages: string[] = setting.value;
+        const isDisabled = disabledPages.some((dp) =>
+          dp === "/"
+            ? pathname === "/"
+            : pathname === dp || pathname.startsWith(dp + "/")
+        );
+
+        if (isDisabled) {
+          return new NextResponse(maintenanceHtml(pathname), {
+            status: 503,
+            headers: { "Content-Type": "text/html; charset=utf-8", "Retry-After": "3600" },
+          });
+        }
       }
+    } catch {
+      // Maintenance check failed — allow request through
     }
   }
 
