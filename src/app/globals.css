@@ -1,0 +1,242 @@
+@import "tailwindcss";
+@import "swiper/css";
+@import "swiper/css/navigation";
+@import "swiper/css/pagination";
+@import "swiper/css/thumbs";
+@import "swiper/css/free-mode";
+
+/* ============================================
+   POLY Store — Brand Design System
+   White + Dark Green | TopZone-inspired layout
+   ============================================ */
+
+:root {
+  /* Brand Green palette */
+  --color-brand-50: #eefbf3;
+  --color-brand-100: #d6f5e2;
+  --color-brand-200: #b0eac8;
+  --color-brand-300: #7adba6;
+  --color-brand-400: #43c47f;
+  --color-brand-500: #1f8f4e;
+  --color-brand-600: #197540;
+  --color-brand-700: #155e35;
+  --color-brand-800: #114a2b;
+  --color-brand-900: #0c3620;
+
+  /* Neutrals */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  --background: #ffffff;
+  --foreground: #111827;
+  --surface: #f9fafb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-300: var(--color-brand-300);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-800: var(--color-brand-800);
+  --color-brand-900: var(--color-brand-900);
+
+  --color-gray-50: var(--color-gray-50);
+  --color-gray-100: var(--color-gray-100);
+  --color-gray-200: var(--color-gray-200);
+  --color-gray-300: var(--color-gray-300);
+  --color-gray-400: var(--color-gray-400);
+  --color-gray-500: var(--color-gray-500);
+  --color-gray-600: var(--color-gray-600);
+  --color-gray-700: var(--color-gray-700);
+  --color-gray-800: var(--color-gray-800);
+  --color-gray-900: var(--color-gray-900);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  background: var(--color-brand-500);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: var(--color-brand-600); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  color: var(--color-brand-500);
+  border: 1.5px solid var(--color-brand-500);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { background: var(--color-brand-500); color: #fff; }
+
+/* ============================================
+   Cards
+   ============================================ */
+.product-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--color-gray-200);
+  overflow: hidden;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.product-card:hover {
+  border-color: var(--color-brand-300);
+  box-shadow: 0 8px 30px rgba(26, 122, 66, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Ensure Swiper slides have equal height */
+.swiper-slide {
+  height: auto !important;
+}
+.swiper-wrapper {
+  align-items: stretch;
+}
+
+/* ============================================
+   Step Indicator
+   ============================================ */
+.step-indicator { display: flex; align-items: center; justify-content: center; }
+.step-circle { width: 2rem; height: 2rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600; flex-shrink: 0; }
+.step-circle.active { background: var(--color-brand-500); color: #fff; }
+.step-circle.completed { background: #16a34a; color: #fff; }
+.step-circle.inactive { background: var(--color-gray-200); color: var(--color-gray-400); }
+.step-line { height: 2px; width: 4rem; flex-shrink: 0; }
+.step-line.completed { background: #16a34a; }
+.step-line.active { background: var(--color-brand-500); }
+.step-line.inactive { background: var(--color-gray-200); }
+
+/* ============================================
+   Timeline
+   ============================================ */
+.timeline-wrapper { position: relative; padding-left: 2rem; }
+.timeline-wrapper::before { content: ""; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: var(--color-gray-200); }
+.timeline-node { position: absolute; left: 0; width: 1.25rem; height: 1.25rem; border-radius: 9999px; border: 2px solid; }
+.timeline-node.completed { background: #16a34a; border-color: #16a34a; }
+.timeline-node.current { background: var(--color-brand-500); border-color: var(--color-brand-500); animation: pulse 2s infinite; }
+.timeline-node.pending { background: #fff; border-color: var(--color-gray-300); }
+
+/* ============================================
+   Animated Checkmark
+   ============================================ */
+.checkmark-circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #16a34a; fill: none; animation: stroke 0.6s cubic-bezier(0.65,0,0.45,1) forwards; }
+.checkmark-check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65,0,0.45,1) 0.8s forwards; }
+.checkmark-svg { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 2; stroke: #16a34a; margin: 0 auto; box-shadow: inset 0 0 0 #16a34a; animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both; }
+@keyframes stroke { 100% { stroke-dashoffset: 0; } }
+@keyframes scale { 0%,100% { transform: none; } 50% { transform: scale3d(1.1,1.1,1); } }
+@keyframes fill { 100% { box-shadow: inset 0 0 0 40px #f0fdf4; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* ============================================
+   Toast
+   ============================================ */
+.custom-toast { position: fixed; top: 20px; right: 20px; z-index: 9999; animation: slideIn 0.4s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Mobile filter bottom sheet */
+.animate-slideUp { animation: slideUp 0.3s ease-out; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* Category nav highlight pulse */
+.cat-highlight {
+  animation: catPulse 1s ease-in-out 3;
+}
+@keyframes catPulse {
+  0%, 100% { background: white; box-shadow: none; }
+  50% { background: var(--color-brand-50); box-shadow: inset 0 0 0 1px var(--color-brand-300), 0 2px 8px rgba(31,143,78,0.15); }
+}
+
+/* QuickView modal */
+.animate-in { animation: modalIn 0.25s ease-out; }
+@keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ============================================
+   Swiper
+   ============================================ */
+.swiper-button-prev, .swiper-button-next { color: #fff !important; }
+.swiper-button-prev::after, .swiper-button-next::after { font-size: 14px !important; font-weight: 700; }
+.swiper-pagination-bullet-active { background: var(--color-brand-500) !important; }
+
+/* Promo banner dots */
+.promo-dots .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--color-gray-300);
+  opacity: 1;
+  transition: all 0.2s;
+  margin: 0 3px !important;
+}
+.promo-dots .swiper-pagination-bullet-active {
+  width: 24px;
+  border-radius: 4px;
+  background: var(--color-brand-500) !important;
+}
+
+/* ============================================
+   Blog post body
+   ============================================ */
+.post-body { color: #374151; line-height: 1.75; font-size: 15px; }
+.post-body > h2 { margin-top: 1.75rem; margin-bottom: 0.75rem; font-size: 1.25rem; font-weight: 700; color: var(--color-brand-600); }
+.post-body > h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.05rem; font-weight: 600; color: #111827; }
+.post-body p { margin-bottom: 0.75rem; }
+.post-body img { max-width: 100%; height: auto; border-radius: 6px; margin: 1rem auto; display: block; }
+
+/* ============================================
+   Scrollbar
+   ============================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }

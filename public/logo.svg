@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="40" fill="#1a4d1a"/>
+  <!-- Phone outline -->
+  <rect x="52" y="28" width="96" height="144" rx="16" stroke="white" stroke-width="8" fill="none"/>
+  <!-- Phone notch -->
+  <rect x="82" y="28" width="36" height="6" rx="3" fill="#1a4d1a" stroke="white" stroke-width="3"/>
+  <!-- Stylized P with spiral -->
+  <path d="M80 70 L80 150" stroke="white" stroke-width="9" stroke-linecap="round"/>
+  <path d="M80 70 C80 70, 80 62, 95 58 C110 54, 130 58, 132 75 C134 92, 118 102, 102 102 L80 102" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <!-- Inner circle of P -->
+  <circle cx="105" cy="80" r="10" stroke="white" stroke-width="7" fill="none"/>
+  <!-- Small dot in center -->
+  <circle cx="105" cy="80" r="3" fill="white"/>
+</svg>
