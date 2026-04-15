@@ -186,10 +186,15 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
               </section>
             )}
 
-            {/* ── Tin tức mới nhất — 2-column layout with Load More ── */}
+            {/* ── Tin tức mới nhất — left list + right sticky sidebar ── */}
             <section>
               <SectionTitle title="Tin tức mới nhất" />
-              <BlogPostGrid initialPosts={latestPosts || []} initialHasMore={hasMore} layout="two-column" />
+              <BlogPostGrid
+                initialPosts={latestPosts || []}
+                initialHasMore={hasMore}
+                layout="two-column"
+                sidebarCategories={childCats.map(c => ({ name: c.name, slug: c.slug }))}
+              />
             </section>
           </div>
         </div>
