@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import { bloggerRedirects } from "./src/lib/blogger-redirects";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return bloggerRedirects;
+  },
   images: {
     remotePatterns: [
       {
@@ -23,6 +27,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "vtaudcllsgtksjiaiiqt.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
       },
     ],
   },
