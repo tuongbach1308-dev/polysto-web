@@ -226,9 +226,9 @@ export default function ProductDetailClient({ product, variants, productImages =
       <section className="max-w-[1200px] mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide mb-4">Thông tin sản phẩm</h2>
-              {clean ? (<><div className="relative"><div className={`post-body ${!expanded ? "overflow-hidden" : ""}`} style={!expanded ? { maxHeight: specsColHeight > 0 ? `${specsColHeight - 100}px` : "400px" } : undefined} dangerouslySetInnerHTML={{ __html: clean }} />{!expanded && (<div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />)}</div><button onClick={() => setExpanded(!expanded)} className="mt-3 w-full py-2.5 text-sm text-brand-500 font-semibold hover:text-brand-600 transition-colors flex items-center justify-center gap-1 border border-brand-200 rounded-md hover:bg-brand-50">{expanded ? "Thu gọn" : "Xem thêm"} <ChevronDown size={14} className={expanded ? "rotate-180 transition-transform" : "transition-transform"} /></button></>) : (<p className="text-sm text-gray-400">Chưa có thông tin sản phẩm.</p>)}
+            <div className="bg-white border border-gray-200 rounded-lg p-5 flex flex-col" style={!expanded && specsColHeight > 0 ? { height: `${specsColHeight}px` } : undefined}>
+              <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide mb-4 flex-shrink-0">Thông tin sản phẩm</h2>
+              {clean ? (<><div className="relative flex-1 min-h-0"><div className={`post-body ${!expanded ? "h-full overflow-hidden" : ""}`} dangerouslySetInnerHTML={{ __html: clean }} />{!expanded && (<div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />)}</div><button onClick={() => setExpanded(!expanded)} className="mt-3 w-full py-2.5 text-sm text-brand-500 font-semibold hover:text-brand-600 transition-colors flex items-center justify-center gap-1 border border-brand-200 rounded-md hover:bg-brand-50 flex-shrink-0">{expanded ? "Thu gọn" : "Xem thêm"} <ChevronDown size={14} className={expanded ? "rotate-180 transition-transform" : "transition-transform"} /></button></>) : (<p className="text-sm text-gray-400">Chưa có thông tin sản phẩm.</p>)}
             </div>
           </div>
 
