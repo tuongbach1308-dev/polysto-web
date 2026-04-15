@@ -2,48 +2,30 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Home, Eye, Clock } from "lucide-react";
+import { ChevronRight, Home, Eye, Clock } from "lucide-react";
 import { notFound } from "next/navigation";
 import PostTOC from "@/components/PostTOC";
 import JsonLd from "@/components/JsonLd";
+import BlogPostGrid from "@/components/BlogPostGrid";
 import { buildArticleJsonLd, buildBreadcrumbJsonLd, buildPostMetadata } from "@/lib/seo";
 import type { Post } from "@/lib/database.types";
 import { Newspaper, MessageCircleQuestion, MonitorSmartphone, ThumbsUp, Lightbulb, Tag, Users } from "lucide-react";
 
 export const revalidate = 60;
 
-interface PostCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  parent_id: string | null;
-  sort_order: number;
-}
-
+interface PostCategory { id: string; name: string; slug: string; description: string | null; parent_id: string | null; sort_order: number }
 type PostRow = Record<string, unknown>;
+const POST_FIELDS = "id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time, tags";
 
 const SIDEBAR_ICONS: Record<string, typeof Newspaper> = {
-  "tin-cong-nghe": Newspaper,
-  "tu-van": MessageCircleQuestion,
-  "tren-tay": MonitorSmartphone,
-  "danh-gia": ThumbsUp,
-  "thu-thuat": Lightbulb,
-  "san-pham-moi": Newspaper,
-  "concept": Newspaper,
-  "khuyen-mai": Tag,
-  "tuyen-dung": Users,
+  "tin-cong-nghe": Newspaper, "tu-van": MessageCircleQuestion, "tren-tay": MonitorSmartphone,
+  "danh-gia": ThumbsUp, "thu-thuat": Lightbulb, "khuyen-mai": Tag, "tuyen-dung": Users,
 };
 
-async function resolvePostCategoryChain(slugs: string[]): Promise<PostCategory[]> {
+async function resolveCategory(slug: string) {
   const supabase = await createClient();
-  const chain: PostCategory[] = [];
-  for (const s of slugs) {
-    const { data } = await supabase.from("post_categories").select("*").eq("slug", s).single();
-    if (!data) return chain;
-    chain.push(data);
-  }
-  return chain;
+  const { data } = await supabase.from("post_categories").select("*").eq("slug", slug).single();
+  return data as PostCategory | null;
 }
 
 async function findPost(slug: string) {
@@ -54,32 +36,19 @@ async function findPost(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug?: string[] }> }): Promise<Metadata> {
   const { slug: slugPath = [] } = await params;
-
-  if (slugPath.length === 0) {
-    return {
-      title: "Góc Công Nghệ - Tin tức Apple",
-      description: "Tin tức công nghệ, đánh giá, trên tay, tư vấn mua sắm sản phẩm Apple. Cập nhật mỗi ngày tại POLY Store.",
-      alternates: { canonical: "/tin-tuc" },
-    };
-  }
+  if (slugPath.length === 0) return { title: "Góc Công Nghệ - Tin tức Apple", description: "Tin tức công nghệ, đánh giá, trên tay sản phẩm Apple tại POLY Store.", alternates: { canonical: "/tin-tuc" } };
 
   const post = await findPost(slugPath[slugPath.length - 1]);
   if (post) return buildPostMetadata({ post: post as Post, url: `/tin-tuc/${slugPath.join("/")}` });
 
-  const chain = await resolvePostCategoryChain(slugPath);
-  const cat = chain[chain.length - 1];
+  const cat = await resolveCategory(slugPath[0]);
   if (cat) return { title: `${cat.name} - Góc Công Nghệ`, description: cat.description || `Bài viết về ${cat.name} tại POLY Store`, alternates: { canonical: `/tin-tuc/${slugPath.join("/")}` } };
-
   return { title: "Tin tức" };
 }
 
-export default async function BlogCatchAllPage({ params, searchParams }: {
-  params: Promise<{ slug?: string[] }>;
-  searchParams: Promise<{ page?: string }>;
-}) {
+export default async function BlogCatchAllPage({ params }: { params: Promise<{ slug?: string[] }> }) {
   const supabase = await createClient();
   const { slug: slugPath = [] } = await params;
-  const sp = await searchParams;
 
   // ── Post detail ──
   if (slugPath.length > 0) {
@@ -87,278 +56,221 @@ export default async function BlogCatchAllPage({ params, searchParams }: {
     if (post) return renderPostDetail(post, slugPath);
   }
 
-  // ── Category or main listing ──
-  const chain = await resolvePostCategoryChain(slugPath);
-  const activeCat = chain.length > 0 ? chain[chain.length - 1] : null;
-  if (slugPath.length > 0 && !activeCat) notFound();
-
+  // ── Categories sidebar (shared) ──
   const { data: allPostCats } = await supabase.from("post_categories").select("*").order("sort_order");
+  const childCats = (allPostCats || []).filter((c: PostCategory) => c.parent_id !== null);
 
-  if (activeCat) {
-    return renderCategoryListing(supabase, activeCat, allPostCats || [], sp);
+  // ── Category listing ──
+  if (slugPath.length > 0) {
+    const activeCat = await resolveCategory(slugPath[0]);
+    if (!activeCat) notFound();
+    return renderCategoryListing(supabase, activeCat, childCats);
   }
-  return renderMainListing(supabase, allPostCats || [], sp);
+
+  // ── Main listing (magazine) ──
+  return renderMainListing(supabase, childCats);
 }
 
 // ════════════════════════════════════════════════════════════
-// RENDER: Main Blog Listing (/tin-tuc) — Magazine style
+// SIDEBAR (shared by all listing/detail views)
 // ════════════════════════════════════════════════════════════
-async function renderMainListing(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  allPostCats: PostCategory[],
-  sp: { page?: string }
-) {
-  const page = Math.max(1, parseInt(sp.page || "1"));
-  const childCats = allPostCats.filter((c) => c.parent_id !== null);
+function Sidebar({ categories, activeCatId }: { categories: PostCategory[]; activeCatId?: string }) {
+  return (
+    <aside className="hidden lg:block lg:col-span-1">
+      <div className="sticky top-20 space-y-1">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Danh mục</h3>
+        <Link href="/tin-tuc" className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${!activeCatId ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
+          <Newspaper size={15} className={!activeCatId ? "text-brand-500" : "text-gray-400"} />
+          Tất cả
+        </Link>
+        {categories.map((cat) => {
+          const Icon = SIDEBAR_ICONS[cat.slug] || Newspaper;
+          const active = cat.id === activeCatId;
+          return (
+            <Link key={cat.id} href={`/tin-tuc/${cat.slug}`}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${active ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
+              <Icon size={15} className={active ? "text-brand-500" : "text-gray-400"} />
+              {cat.name}
+            </Link>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
 
-  // Page 1: magazine layout (featured + most viewed + per-category sections)
-  // Page 2+: simple grid with pagination
-  if (page === 1) {
-    // Featured: latest 4 posts
-    const { data: featured } = await supabase.from("posts").select("id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time, tags")
-      .eq("status", "published").order("created_at", { ascending: false }).limit(4);
+// ════════════════════════════════════════════════════════════
+// MAIN LISTING (/tin-tuc) — Magazine layout
+// ════════════════════════════════════════════════════════════
+async function renderMainListing(supabase: Awaited<ReturnType<typeof createClient>>, childCats: PostCategory[]) {
+  // Featured: latest 4
+  const { data: featured } = await supabase.from("posts").select(POST_FIELDS).eq("status", "published").order("created_at", { ascending: false }).limit(4);
+  const featuredIds = (featured || []).map((p) => p.id);
 
-    // Most viewed (all time, excluding featured)
-    const featuredIds = (featured || []).map((p) => p.id);
-    const { data: mostViewed } = await supabase.from("posts").select("id, title, slug, thumbnail, created_at, view_count")
-      .eq("status", "published").order("view_count", { ascending: false }).limit(10);
-    const filteredMostViewed = (mostViewed || []).filter((p) => !featuredIds.includes(p.id)).slice(0, 6);
+  // Most viewed (exclude featured)
+  const { data: mostViewedRaw } = await supabase.from("posts").select("id, title, slug, thumbnail, created_at, view_count").eq("status", "published").order("view_count", { ascending: false }).limit(12);
+  const mostViewed = (mostViewedRaw || []).filter((p) => !featuredIds.includes(p.id)).slice(0, 6);
 
-    // Per-category sections: fetch 3 latest posts per child category
-    const catSections: { cat: PostCategory; posts: PostRow[] }[] = [];
-    for (const cat of childCats) {
-      const { data: ppcs } = await supabase.from("post_post_categories").select("post_id").eq("category_id", cat.id);
-      if (!ppcs?.length) continue;
-      const { data: catPosts } = await supabase.from("posts")
-        .select("id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time")
-        .eq("status", "published").in("id", ppcs.map((p) => p.post_id))
-        .order("created_at", { ascending: false }).limit(3);
-      if (catPosts?.length) catSections.push({ cat, posts: catPosts });
-    }
+  // Latest posts for "load more" grid (skip first 4 featured)
+  const PER_PAGE = 9;
+  const { data: latestPosts, count: totalCount } = await supabase.from("posts")
+    .select(POST_FIELDS, { count: "exact" }).eq("status", "published")
+    .order("created_at", { ascending: false }).range(4, 4 + PER_PAGE - 1);
 
-    // Total for pagination
-    const { count: totalCount } = await supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "published");
-    const perPage = 15;
-    const totalPages = Math.ceil((totalCount || 0) / perPage);
+  const hasMore = (4 + PER_PAGE) < (totalCount || 0);
 
-    return (
-      <div className="bg-surface min-h-screen">
-        <JsonLd data={buildBreadcrumbJsonLd([{ name: "Trang chủ", url: "/" }, { name: "Tin tức", url: "/tin-tuc" }])} />
-        <div className="max-w-[1200px] mx-auto px-4 py-5 space-y-10">
+  return (
+    <div className="bg-surface min-h-screen">
+      <JsonLd data={buildBreadcrumbJsonLd([{ name: "Trang chủ", url: "/" }, { name: "Tin tức", url: "/tin-tuc" }])} />
+      <div className="max-w-[1200px] mx-auto px-4 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <Sidebar categories={childCats} />
 
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 font-heading">Góc Công Nghệ</h1>
+          <div className="lg:col-span-3 space-y-10">
+            {/* Breadcrumb */}
             <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức" }]} />
-          </div>
 
-          {/* Category tabs — scrollable on mobile */}
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            <Link href="/tin-tuc" className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-600 text-white flex-shrink-0">Tất cả</Link>
-            {childCats.map((c) => (
-              <Link key={c.id} href={`/tin-tuc/${c.slug}`}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600 transition-colors flex-shrink-0 whitespace-nowrap">
-                {c.name}
-              </Link>
-            ))}
-          </div>
+            {/* Mobile category pills */}
+            <div className="flex gap-2 overflow-x-auto lg:hidden -mt-4" style={{ scrollbarWidth: "none" }}>
+              <Link href="/tin-tuc" className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white flex-shrink-0">Tất cả</Link>
+              {childCats.map((c) => (
+                <Link key={c.id} href={`/tin-tuc/${c.slug}`} className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white border border-gray-200 text-gray-600 flex-shrink-0 whitespace-nowrap">{c.name}</Link>
+              ))}
+            </div>
 
-          {/* ── Featured Hero ── */}
-          {featured && featured.length > 0 && (
-            <section>
-              <SectionTitle title="Chủ đề hot" color="red" />
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                {/* Main feature */}
-                <Link href={`/tin-tuc/${featured[0].slug}`} className="lg:col-span-3 group block relative min-h-[300px] lg:min-h-[380px] rounded-xl overflow-hidden bg-gray-100">
-                  {featured[0].thumbnail ? <img src={featured[0].thumbnail} alt={featured[0].title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-brand-800" />}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
-                    {featured[0].tags?.[0] && <span className="inline-block text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded mb-2">{featured[0].tags[0]}</span>}
-                    <h2 className="text-white text-xl lg:text-2xl font-bold leading-tight line-clamp-3 group-hover:text-brand-300 transition-colors">{featured[0].title}</h2>
-                    <div className="flex items-center gap-3 mt-2 text-white/60 text-xs">
-                      <span>{formatDate(featured[0].created_at)}</span>
-                      {featured[0].reading_time && <span className="flex items-center gap-1"><Clock size={11} /> {featured[0].reading_time} phút đọc</span>}
+            {/* ── Hero featured ── */}
+            {featured && featured.length > 0 && (
+              <section>
+                <SectionTitle title="Chủ đề hot" color="red" />
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                  <Link href={`/tin-tuc/${featured[0].slug}`} className="lg:col-span-3 group relative min-h-[260px] lg:min-h-[340px] rounded-xl overflow-hidden bg-gray-100 block">
+                    {featured[0].thumbnail ? <img src={featured[0].thumbnail} alt={featured[0].title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-brand-800" />}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      {featured[0].tags?.[0] && <span className="inline-block text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded mb-2">{featured[0].tags[0]}</span>}
+                      <h2 className="text-white text-lg lg:text-xl font-bold leading-tight line-clamp-3 group-hover:text-brand-300 transition-colors">{featured[0].title}</h2>
+                      <p className="text-white/60 text-xs mt-2">{formatDate(featured[0].created_at)}</p>
                     </div>
+                  </Link>
+                  <div className="lg:col-span-2 grid grid-cols-1 gap-3">
+                    {featured.slice(1, 4).map((p) => (
+                      <Link key={p.id} href={`/tin-tuc/${p.slug}`} className="group flex gap-3">
+                        <div className="w-[110px] lg:w-[130px] flex-shrink-0 aspect-[16/10] rounded-lg overflow-hidden bg-gray-100">
+                          {p.thumbnail ? <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" /> : <div className="w-full h-full bg-brand-700" />}
+                        </div>
+                        <div className="flex-1 min-w-0 py-0.5">
+                          <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{p.title}</h3>
+                          <p className="text-[11px] text-gray-400 mt-1.5">{formatDate(p.created_at)}</p>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                </Link>
-                {/* Side features */}
-                <div className="lg:col-span-2 grid grid-cols-1 gap-3">
-                  {featured.slice(1, 4).map((post) => (
-                    <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-3">
-                      <div className="w-[120px] lg:w-[140px] flex-shrink-0 aspect-[16/10] rounded-lg overflow-hidden bg-gray-100">
-                        {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-brand-700" />}
-                      </div>
-                      <div className="flex-1 min-w-0 py-0.5">
-                        <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{post.title}</h3>
-                        <p className="text-[11px] text-gray-400 mt-1.5">{formatDate(post.created_at)}</p>
+                </div>
+              </section>
+            )}
+
+            {/* ── Most viewed ── */}
+            {mostViewed.length > 0 && (
+              <section>
+                <SectionTitle title="Xem nhiều nhất" color="orange" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                  {mostViewed.map((p, i) => (
+                    <Link key={p.id} href={`/tin-tuc/${p.slug}`} className="group flex gap-3 items-start">
+                      <span className="text-2xl font-black text-gray-200 group-hover:text-brand-300 transition-colors leading-none flex-shrink-0 w-7 text-right">{i + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{p.title}</h3>
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-400">
+                          <span>{formatDate(p.created_at)}</span>
+                          {p.view_count > 0 && <span className="flex items-center gap-0.5"><Eye size={10} /> {p.view_count}</span>}
+                        </div>
                       </div>
                     </Link>
                   ))}
                 </div>
-              </div>
-            </section>
-          )}
+              </section>
+            )}
 
-          {/* ── Most Viewed ── */}
-          {filteredMostViewed.length > 0 && (
+            {/* ── Latest posts with Load More ── */}
             <section>
-              <SectionTitle title="Xem nhiều nhất" color="orange" />
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredMostViewed.map((post, i) => (
-                  <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-3 items-start">
-                    <span className="text-3xl font-black text-gray-200 group-hover:text-brand-300 transition-colors leading-none flex-shrink-0 w-8">{i + 1}</span>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{post.title}</h3>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-400">
-                        <span>{formatDate(post.created_at)}</span>
-                        {post.view_count > 0 && <span className="flex items-center gap-0.5"><Eye size={10} /> {post.view_count}</span>}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <SectionTitle title="Tin tức mới nhất" />
+              <BlogPostGrid initialPosts={latestPosts || []} initialHasMore={hasMore} />
             </section>
-          )}
-
-          {/* ── Per-category sections ── */}
-          {catSections.map(({ cat, posts }) => (
-            <section key={cat.id}>
-              <div className="flex items-center justify-between mb-4">
-                <SectionTitle title={cat.name} />
-                <Link href={`/tin-tuc/${cat.slug}`} className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
-                  Xem tất cả <ChevronRight size={14} />
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {posts.map((post) => <PostCard key={post.id as string} post={post} />)}
-              </div>
-            </section>
-          ))}
-
-          {/* Pagination */}
-          {totalPages > 1 && <SmartPagination currentPage={page} totalPages={totalPages} basePath="/tin-tuc" />}
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  // ── Page 2+: simple paginated grid ──
-  const perPage = 15;
-  const { data: posts, count: totalCount } = await supabase.from("posts")
-    .select("id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time", { count: "exact" })
-    .eq("status", "published").order("created_at", { ascending: false })
-    .range((page - 1) * perPage, page * perPage - 1);
-
-  const totalPages = Math.ceil((totalCount || 0) / perPage);
-
-  return (
-    <div className="bg-surface min-h-screen">
-      <div className="max-w-[1200px] mx-auto px-4 py-5 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">Tin tức — Trang {page}</h1>
-          <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức", href: "/tin-tuc" }, { label: `Trang ${page}` }]} />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(posts || []).map((post) => <PostCard key={post.id} post={post} />)}
-        </div>
-
-        {totalPages > 1 && <SmartPagination currentPage={page} totalPages={totalPages} basePath="/tin-tuc" />}
       </div>
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════
-// RENDER: Category Listing (/tin-tuc/[category-slug])
+// CATEGORY LISTING (/tin-tuc/[slug]) — Sidebar + 3-col grid + load more
 // ════════════════════════════════════════════════════════════
-async function renderCategoryListing(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  activeCat: PostCategory,
-  allPostCats: PostCategory[],
-  sp: { page?: string }
-) {
-  const childCats = allPostCats.filter((c) => c.parent_id !== null);
-  const page = Math.max(1, parseInt(sp.page || "1"));
-  const perPage = 12;
-
-  // Get post IDs in this category
+async function renderCategoryListing(supabase: Awaited<ReturnType<typeof createClient>>, activeCat: PostCategory, childCats: PostCategory[]) {
   const { data: ppcs } = await supabase.from("post_post_categories").select("post_id").eq("category_id", activeCat.id);
   const postIds = ppcs?.map((p) => p.post_id) || [];
 
   let posts: PostRow[] = [];
-  let totalCount = 0;
+  let hasMore = false;
+  const PER_PAGE = 9;
+
   if (postIds.length > 0) {
     const { data, count } = await supabase.from("posts")
-      .select("id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time", { count: "exact" })
-      .eq("status", "published").in("id", postIds)
-      .order("created_at", { ascending: false })
-      .range((page - 1) * perPage, page * perPage - 1);
+      .select(POST_FIELDS, { count: "exact" }).eq("status", "published").in("id", postIds)
+      .order("created_at", { ascending: false }).range(0, PER_PAGE - 1);
     posts = data || [];
-    totalCount = count || 0;
+    hasMore = PER_PAGE < (count || 0);
   }
-
-  const totalPages = Math.ceil(totalCount / perPage);
 
   return (
     <div className="bg-surface min-h-screen">
       <JsonLd data={buildBreadcrumbJsonLd([{ name: "Trang chủ", url: "/" }, { name: "Tin tức", url: "/tin-tuc" }, { name: activeCat.name, url: `/tin-tuc/${activeCat.slug}` }])} />
-      <div className="max-w-[1200px] mx-auto px-4 py-5 space-y-6">
+      <div className="max-w-[1200px] mx-auto px-4 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <Sidebar categories={childCats} activeCatId={activeCat.id} />
 
-        {/* Header */}
-        <div>
-          <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức", href: "/tin-tuc" }, { label: activeCat.name }]} />
-          <h1 className="text-2xl font-bold text-gray-900 font-heading mt-3">{activeCat.name}</h1>
-          {activeCat.description && <p className="text-sm text-gray-500 mt-1">{activeCat.description}</p>}
-        </div>
+          <div className="lg:col-span-3 space-y-6">
+            <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tin tức", href: "/tin-tuc" }, { label: activeCat.name }]} />
 
-        {/* Category tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          <Link href="/tin-tuc" className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600 transition-colors flex-shrink-0">Tất cả</Link>
-          {childCats.map((c) => (
-            <Link key={c.id} href={`/tin-tuc/${c.slug}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium flex-shrink-0 whitespace-nowrap transition-colors ${
-                c.id === activeCat.id
-                  ? "bg-brand-600 text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600"
-              }`}>
-              {c.name}
-            </Link>
-          ))}
-        </div>
+            {/* Mobile category pills */}
+            <div className="flex gap-2 overflow-x-auto lg:hidden" style={{ scrollbarWidth: "none" }}>
+              <Link href="/tin-tuc" className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white border border-gray-200 text-gray-600 flex-shrink-0">Tất cả</Link>
+              {childCats.map((c) => (
+                <Link key={c.id} href={`/tin-tuc/${c.slug}`}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex-shrink-0 whitespace-nowrap ${c.id === activeCat.id ? "bg-brand-600 text-white" : "bg-white border border-gray-200 text-gray-600"}`}>
+                  {c.name}
+                </Link>
+              ))}
+            </div>
 
-        {/* Posts grid — 3 per row */}
-        {posts.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">Chưa có bài viết nào trong danh mục này.</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {posts.map((post) => <PostCard key={post.id as string} post={post} />)}
+            {/* Category header */}
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 font-heading">{activeCat.name}</h1>
+              {activeCat.description && <p className="text-sm text-gray-500 mt-1">{activeCat.description}</p>}
+            </div>
+
+            {/* Posts grid + load more */}
+            <BlogPostGrid initialPosts={posts as any[]} initialHasMore={hasMore} categorySlug={activeCat.slug} />
           </div>
-        )}
-
-        {totalPages > 1 && <SmartPagination currentPage={page} totalPages={totalPages} basePath={`/tin-tuc/${activeCat.slug}`} />}
+        </div>
       </div>
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════
-// RENDER: Post Detail
+// POST DETAIL — Sidebar categories + TOC
 // ════════════════════════════════════════════════════════════
 async function renderPostDetail(post: PostRow, slugPath: string[]) {
   const supabase = await createClient();
 
-  // Related posts
+  const { data: allPostCats } = await supabase.from("post_categories").select("*").order("sort_order");
+  const childCats = (allPostCats || []).filter((c: PostCategory) => c.parent_id !== null);
+
   const { data: relatedPosts } = await supabase.from("posts")
     .select("id, title, slug, thumbnail, created_at, reading_time")
     .eq("status", "published").neq("slug", post.slug as string)
     .order("created_at", { ascending: false }).limit(3);
 
-  // Sidebar categories
-  const { data: allPostCats } = await supabase.from("post_categories").select("*").order("sort_order");
-  const sidebarCats = (allPostCats || []).filter((c: PostCategory) => c.parent_id !== null);
-
-  // Post's category
   const { data: postCatLinks } = await supabase.from("post_post_categories").select("category_id").eq("post_id", post.id as string).limit(1);
   let postCat: PostCategory | null = null;
   if (postCatLinks?.[0]) {
@@ -374,31 +286,34 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
     <div className="bg-surface min-h-screen">
       <JsonLd data={buildArticleJsonLd({ post: post as unknown as Post, url: `/tin-tuc/${slugPath.join("/")}` })} />
       <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
-      <div className="max-w-[1200px] mx-auto px-4 py-4">
+      <div className="max-w-[1200px] mx-auto px-4 py-5">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-          {/* Sidebar */}
-          <aside className="hidden lg:block lg:col-span-1 order-2 lg:order-1">
-            <div className="sticky top-20 space-y-6">
-              <nav className="space-y-0.5">
-                {sidebarCats.map((cat: PostCategory) => {
+          {/* Sidebar: categories + TOC */}
+          <aside className="hidden lg:block lg:col-span-1">
+            <div className="sticky top-20 space-y-5">
+              <div className="space-y-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Danh mục</h3>
+                {childCats.map((cat: PostCategory) => {
                   const Icon = SIDEBAR_ICONS[cat.slug] || Newspaper;
                   const active = postCat?.id === cat.id;
                   return (
                     <Link key={cat.id} href={`/tin-tuc/${cat.slug}`}
-                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${active ? "bg-brand-50 text-brand-600" : "hover:bg-gray-50"}`}>
-                      <Icon size={16} className={`flex-shrink-0 ${active ? "text-brand-600" : "text-gray-400 group-hover:text-brand-500"}`} />
-                      <span className={`text-sm ${active ? "font-semibold text-brand-600" : "text-gray-600 group-hover:text-gray-800"}`}>{cat.name}</span>
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${active ? "bg-brand-50 text-brand-600 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
+                      <Icon size={15} className={active ? "text-brand-500" : "text-gray-400"} />
+                      {cat.name}
                     </Link>
                   );
                 })}
-              </nav>
-              <div className="border-t border-gray-200 pt-4"><PostTOC /></div>
+              </div>
+              <div className="border-t border-gray-200 pt-4">
+                <PostTOC />
+              </div>
             </div>
           </aside>
 
           {/* Content */}
-          <div className="lg:col-span-3 order-1 lg:order-2">
+          <div className="lg:col-span-3">
             <Breadcrumb items={[
               { label: "Trang chủ", href: "/" },
               { label: "Tin tức", href: "/tin-tuc" },
@@ -438,7 +353,6 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
               )}
             </div>
 
-            {/* Related posts — 3 per row */}
             {relatedPosts && relatedPosts.length > 0 && (
               <div className="mt-10">
                 <SectionTitle title="Bài viết liên quan" />
@@ -446,7 +360,7 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
                   {relatedPosts.map((p) => (
                     <Link key={p.id} href={`/tin-tuc/${p.slug}`} className="group block">
                       <div className="aspect-[16/10] rounded-lg overflow-hidden bg-gray-100 mb-2.5">
-                        {p.thumbnail ? <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/30 text-lg font-black">POLY</span></div>}
+                        {p.thumbnail ? <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" /> : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/30 text-lg font-black">POLY</span></div>}
                       </div>
                       <h4 className="text-[13px] font-semibold text-gray-700 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{p.title}</h4>
                       <p className="text-[11px] text-gray-400 mt-1">{formatDate(p.created_at)}</p>
@@ -462,33 +376,13 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
   );
 }
 
-// ════ Shared Components ════
-
-function PostCard({ post }: { post: PostRow }) {
-  return (
-    <Link href={`/tin-tuc/${post.slug}`} className="group block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-gray-100 transition-all duration-300">
-      <div className="aspect-[16/10] bg-gray-100 overflow-hidden">
-        {(post.thumbnail as string)
-          ? <img src={post.thumbnail as string} alt={post.title as string} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          : <div className="w-full h-full bg-brand-700 flex items-center justify-center"><span className="text-white/20 text-2xl font-black">POLY</span></div>}
-      </div>
-      <div className="p-4">
-        <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">{post.title as string}</h3>
-        {(post.excerpt as string) && <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">{(post.excerpt as string).slice(0, 120)}</p>}
-        <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-400">
-          <span>{formatDate(post.created_at as string)}</span>
-          {(post.reading_time as number) > 0 && <span className="flex items-center gap-0.5"><Clock size={10} /> {post.reading_time as number} phút</span>}
-        </div>
-      </div>
-    </Link>
-  );
-}
+// ════ Shared ════
 
 function SectionTitle({ title, color }: { title: string; color?: "red" | "orange" | "green" }) {
-  const barColors = { red: "bg-red-500", orange: "bg-orange-500", green: "bg-brand-500" };
+  const c = { red: "bg-red-500", orange: "bg-orange-500", green: "bg-brand-500" };
   return (
     <div className="flex items-center gap-2.5 mb-4">
-      <div className={`w-1 h-5 rounded-full ${barColors[color || "green"]}`} />
+      <div className={`w-1 h-5 rounded-full ${c[color || "green"]}`} />
       <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">{title}</h2>
     </div>
   );
@@ -510,47 +404,5 @@ function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) {
         </span>
       ))}
     </nav>
-  );
-}
-
-function SmartPagination({ currentPage, totalPages, basePath }: { currentPage: number; totalPages: number; basePath: string }) {
-  const pages: (number | "...")[] = [];
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    if (currentPage > 3) pages.push("...");
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
-    if (currentPage < totalPages - 2) pages.push("...");
-    pages.push(totalPages);
-  }
-
-  const href = (p: number) => `${basePath}${p > 1 ? `?page=${p}` : ""}`;
-
-  return (
-    <div className="flex items-center justify-center gap-1.5 pt-4">
-      {currentPage > 1 && (
-        <Link href={href(currentPage - 1)} className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 transition-colors">
-          <ChevronLeft size={16} />
-        </Link>
-      )}
-      {pages.map((p, i) =>
-        p === "..." ? (
-          <span key={`dots-${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm">…</span>
-        ) : (
-          <Link key={p} href={href(p)}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-              p === currentPage ? "bg-brand-600 text-white shadow-sm" : "border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600"
-            }`}>
-            {p}
-          </Link>
-        )
-      )}
-      {currentPage < totalPages && (
-        <Link href={href(currentPage + 1)} className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 transition-colors">
-          <ChevronRight size={16} />
-        </Link>
-      )}
-    </div>
   );
 }
