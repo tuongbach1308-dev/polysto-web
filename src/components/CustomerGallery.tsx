@@ -6,6 +6,7 @@ import Image from "next/image";
 interface CustomerPhoto {
   url: string;
   alt: string;
+  position?: string;
 }
 
 export default function CustomerGallery({ images }: { images?: CustomerPhoto[] }) {
@@ -61,6 +62,7 @@ export default function CustomerGallery({ images }: { images?: CustomerPhoto[] }
                   alt={photo.alt || `Khách hàng ${(i % (images?.length || 1)) + 1}`}
                   fill
                   className="object-cover"
+                  style={photo.position ? { objectPosition: photo.position } : undefined}
                   sizes="180px"
                 />
               </div>
