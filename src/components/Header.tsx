@@ -191,7 +191,7 @@ export default function Header({ settings }: { settings: Record<string, string> 
       </div>
 
       <SearchPopup open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} phone={settings.phone} address={settings.footer_locations} />
     </>
   );
 }

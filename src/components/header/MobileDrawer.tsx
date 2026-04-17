@@ -30,7 +30,7 @@ interface CategoryNode extends Category {
   children: CategoryNode[];
 }
 
-export default function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function MobileDrawer({ open, onClose, phone, address }: { open: boolean; onClose: () => void; phone?: string; address?: string }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -168,12 +168,18 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
 
         {/* Footer */}
         <div className="border-t border-gray-100 px-4 py-3 shrink-0 space-y-2">
-          <a href="tel:0815242433" className="flex items-center gap-2 text-sm text-brand-600 font-medium">
-            <Phone size={14} /> 0815 242 433
+          <a href={`tel:${(phone || "0815242433").replace(/\s/g, "")}`} className="flex items-center gap-2 text-sm text-brand-600 font-medium">
+            <Phone size={14} /> {phone ? phone.replace(/(\d{4})(\d{3})(\d{3})/, "$1 $2 $3") : "0815 242 433"}
           </a>
-          <p className="flex items-center gap-2 text-xs text-gray-400">
-            <MapPin size={12} /> 256 Nghi Tàm, Tây Hồ, Hà Nội
-          </p>
+          {(() => {
+            let addr = "";
+            try { const locs = address ? JSON.parse(address) : []; if (locs[0]?.address) addr = locs[0].address; } catch { /* */ }
+            return addr ? (
+              <p className="flex items-center gap-2 text-xs text-gray-400">
+                <MapPin size={12} /> {addr}
+              </p>
+            ) : null;
+          })()}
         </div>
       </div>
     </div>

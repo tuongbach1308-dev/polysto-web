@@ -12,16 +12,14 @@ interface ContactInfo {
   hours_weekend: string;
 }
 
-const DEFAULTS: ContactInfo = {
-  phone: "0815 242 433",
-  email: "info@polystore.vn",
-  address: "170/4/2 Bùi Đình Túy, Phường Bình Thạnh, TPHCM",
-  hours_weekday: "T2 - T7: 8:00 - 21:00",
-  hours_weekend: "CN: 9:00 - 18:00",
-};
-
 export default function ContactPageClient({ contact }: { contact: ContactInfo | null }) {
-  const info = { ...DEFAULTS, ...Object.fromEntries(Object.entries(contact || {}).filter(([, v]) => v)) };
+  const info: ContactInfo = {
+    phone: contact?.phone || "",
+    email: contact?.email || "",
+    address: contact?.address || "",
+    hours_weekday: contact?.hours_weekday || "",
+    hours_weekend: contact?.hours_weekend || "",
+  };
   const supabase = createClient();
   const [form, setForm] = useState({ name: "", phone: "", email: "", subject: "", message: "" });
   const [toast, setToast] = useState(false);

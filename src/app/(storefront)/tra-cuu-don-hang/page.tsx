@@ -91,7 +91,7 @@ export default function OrderTrackingPage() {
             <div className="text-center py-10 mt-4">
               <Package className="mx-auto text-gray-200 mb-3" size={48} />
               <p className="text-sm text-gray-500">Không tìm thấy đơn hàng hoặc thông tin bảo hành.</p>
-              <p className="text-xs text-gray-400 mt-1">Vui lòng kiểm tra lại thông tin hoặc liên hệ hotline 0815 242 433</p>
+              <p className="text-xs text-gray-400 mt-1">Vui lòng kiểm tra lại thông tin hoặc <Link href="/lien-he" className="text-brand-500 hover:underline">liên hệ chúng tôi</Link></p>
             </div>
           )}
 
