@@ -54,14 +54,14 @@ export default function CustomerGallery({ images }: { images?: CustomerPhoto[] }
             {displayImages.map((photo, i) => (
               <div
                 key={i}
-                className="w-[220px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden relative bg-gray-100"
+                className="w-[180px] h-[240px] flex-shrink-0 rounded-lg overflow-hidden relative bg-gray-100"
               >
                 <Image
                   src={photo.url}
                   alt={photo.alt || `Khách hàng ${(i % (images?.length || 1)) + 1}`}
                   fill
                   className="object-cover"
-                  sizes="220px"
+                  sizes="180px"
                 />
               </div>
             ))}
