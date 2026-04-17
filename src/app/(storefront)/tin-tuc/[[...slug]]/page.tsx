@@ -14,7 +14,15 @@ export const revalidate = 60;
 
 interface PostCategory { id: string; name: string; slug: string; description: string | null; parent_id: string | null; sort_order: number; meta_title: string | null; meta_description: string | null }
 type PostRow = Record<string, unknown>;
-const POST_FIELDS = "id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time, tags";
+const POST_FIELDS = "id, title, slug, thumbnail, excerpt, content, created_at, view_count, reading_time, tags";
+
+/** Strip HTML and generate excerpt from content when excerpt is null */
+function withExcerpt<T extends { excerpt: string | null; content?: string | null }>(posts: T[]): T[] {
+  return posts.map((p) => ({
+    ...p,
+    excerpt: p.excerpt || (p.content ? p.content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().substring(0, 160) : null),
+  }));
+}
 
 async function resolveCategory(slug: string) {
   const supabase = await createClient();
@@ -70,8 +78,9 @@ export default async function BlogCatchAllPage({ params }: { params: Promise<{ s
 // ════════════════════════════════════════════════════════════
 async function renderMainListing(supabase: Awaited<ReturnType<typeof createClient>>, childCats: PostCategory[]) {
   // Featured: latest 4
-  const { data: featured } = await supabase.from("posts").select(POST_FIELDS).eq("status", "published").order("created_at", { ascending: false }).limit(4);
-  const featuredIds = (featured || []).map((p) => p.id);
+  const { data: featuredRaw } = await supabase.from("posts").select(POST_FIELDS).eq("status", "published").order("created_at", { ascending: false }).limit(4);
+  const featured = withExcerpt(featuredRaw || []);
+  const featuredIds = featured.map((p) => p.id);
 
   // Most viewed (exclude featured, max 10)
   const { data: mostViewedRaw } = await supabase.from("posts").select("id, title, slug, thumbnail, created_at, view_count, reading_time").eq("status", "published").order("view_count", { ascending: false }).limit(14);
@@ -79,9 +88,10 @@ async function renderMainListing(supabase: Awaited<ReturnType<typeof createClien
 
   // Latest posts for 2-column "load more" (skip first 4 featured)
   const PER_PAGE = 10;
-  const { data: latestPosts, count: totalCount } = await supabase.from("posts")
+  const { data: latestRaw, count: totalCount } = await supabase.from("posts")
     .select(POST_FIELDS, { count: "exact" }).eq("status", "published")
     .order("created_at", { ascending: false }).range(4, 4 + PER_PAGE - 1);
+  const latestPosts = withExcerpt(latestRaw || []);
 
   const hasMore = (4 + PER_PAGE) < (totalCount || 0);
 
@@ -175,7 +185,7 @@ async function renderCategoryListing(supabase: Awaited<ReturnType<typeof createC
     const { data, count } = await supabase.from("posts")
       .select(POST_FIELDS, { count: "exact" }).eq("status", "published").in("id", postIds)
       .order("created_at", { ascending: false }).range(0, PER_PAGE - 1);
-    posts = data || [];
+    posts = withExcerpt(data || []);
     hasMore = PER_PAGE < (count || 0);
   }
 

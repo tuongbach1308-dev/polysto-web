@@ -30,20 +30,27 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("posts")
-    .select("id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time, tags", { count: "exact" })
+    .select("id, title, slug, thumbnail, excerpt, content, created_at, view_count, reading_time, tags", { count: "exact" })
     .eq("status", "published");
 
   if (postIds) query = query.in("id", postIds);
 
-  const { data: posts, count } = await query
+  const { data: rawPosts, count } = await query
     .order("created_at", { ascending: false })
     .range((page - 1) * limit, page * limit - 1);
+
+  // Auto-generate excerpt from content when missing, then strip content from response
+  const posts = (rawPosts || []).map((p) => {
+    const excerpt = p.excerpt || (p.content ? p.content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().substring(0, 160) : null);
+    const { content: _, ...rest } = p;
+    return { ...rest, excerpt };
+  });
 
   const total = count || 0;
   const hasMore = page * limit < total;
 
   return NextResponse.json(
-    { posts: posts || [], hasMore, total, page },
+    { posts, hasMore, total, page },
     { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } }
   );
 }

@@ -15,15 +15,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://polystore.vn";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const supabase = await createClient();
   const { slug } = await params;
-  const { data: post } = await supabase.from("posts").select("title, excerpt, thumbnail").eq("slug", slug).single();
+  const { data: post } = await supabase.from("posts").select("title, excerpt, content, thumbnail, meta_description").eq("slug", slug).single();
   if (!post) return { title: "Bài viết không tồn tại" };
+  const desc = post.meta_description || post.excerpt || (post.content ? post.content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().substring(0, 160) : null) || `Đọc bài viết "${post.title}" tại POLY Store`;
   return {
     title: post.title,
-    description: post.excerpt || `Đọc bài viết "${post.title}" tại POLY Store`,
+    description: desc,
     alternates: { canonical: `/tin-tuc/${slug}` },
     openGraph: {
       title: post.title,
-      description: post.excerpt || undefined,
+      description: desc,
       url: `/tin-tuc/${slug}`,
       type: "article",
       images: post.thumbnail ? [{ url: post.thumbnail }] : undefined,
