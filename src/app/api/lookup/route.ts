@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
   // ── Search admin orders by phone or seri ──
   let cleanAdminOrder = null;
   if (admin && !warranty) {
-    const adminOrderFields = "id, customer_name, customer_phone, status, sale_date, created_at, order_items(seri, product_name, product_type, warranty_months, condition, capacity, color)";
+    const adminOrderFields = "id, customer_name, customer_phone, status, sale_date, created_at, order_items(seri, product_name, product_type, warranty_months, bao_test, pin_warranty, condition, capacity, color)";
 
     let rawOrder = null;
 
@@ -173,6 +173,8 @@ export async function POST(request: NextRequest) {
           product_name: item.product_name,
           product_type: item.product_type,
           warranty_months: item.warranty_months,
+          bao_test: item.bao_test,
+          pin_warranty: item.pin_warranty,
           condition: item.condition,
           capacity: item.capacity,
           color: item.color,

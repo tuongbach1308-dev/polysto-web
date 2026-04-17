@@ -43,6 +43,8 @@ interface LookupResult {
       product_name: string;
       product_type: string;
       warranty_months: number;
+      bao_test: string | null;
+      pin_warranty: string | null;
       condition: string | null;
       capacity: string | null;
       color: string | null;
@@ -223,15 +225,21 @@ export default function OrderTrackingPage() {
                     {/* Items */}
                     <div className="border-t border-gray-100 pt-3 space-y-2">
                       {adminOrder.items.map((item, i) => (
-                        <div key={i} className="text-sm py-1.5 border-b border-gray-50 last:border-0">
+                        <div key={i} className="text-sm py-2.5 border-b border-gray-50 last:border-0">
                           <p className="font-medium">{item.product_name}</p>
                           <div className="flex gap-2 mt-0.5 text-xs text-gray-400">
                             {item.condition && <span>{item.condition}</span>}
                             {item.capacity && <span>{item.capacity}</span>}
                             {item.color && <span>{item.color}</span>}
                           </div>
-                          {item.seri && <p className="text-xs text-gray-400 mt-0.5 font-mono">Seri: {item.seri}</p>}
-                          {item.warranty_months > 0 && <p className="text-xs text-brand-500 mt-0.5">BH {item.warranty_months} tháng</p>}
+                          {item.seri && <p className="text-xs text-gray-400 mt-1 font-mono">Seri: {item.seri}</p>}
+                          {(item.bao_test || item.warranty_months > 0 || item.pin_warranty) && (
+                            <div className="flex flex-wrap gap-2 mt-1.5">
+                              {item.bao_test && <span className="inline-flex items-center text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded">Bao test: {item.bao_test}</span>}
+                              {item.warranty_months > 0 && <span className="inline-flex items-center text-[11px] bg-green-50 text-green-600 px-2 py-0.5 rounded">BH: {item.warranty_months} tháng</span>}
+                              {item.pin_warranty && <span className="inline-flex items-center text-[11px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded">BH Pin: {item.pin_warranty}</span>}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
