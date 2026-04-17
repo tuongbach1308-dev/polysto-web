@@ -43,6 +43,7 @@ interface LookupResult {
       product_name: string;
       product_type: string;
       warranty_months: number;
+      warranty_end: string | null;
       bao_test: string | null;
       pin_warranty: string | null;
       condition: string | null;
@@ -171,6 +172,12 @@ export default function OrderTrackingPage() {
                       <div><p className="text-xs text-gray-400">Ngày mua</p><p className="font-medium">{formatDate(warranty.sale_date as string)}</p></div>
                       <div><p className="text-xs text-gray-400">Bảo hành đến</p><p className="font-medium">{formatDate(warranty.warranty_end as string)}</p></div>
                       <div><p className="text-xs text-gray-400">Thời hạn</p><p className="font-medium">{warranty.warranty_months as number} tháng</p></div>
+                      {warranty.bao_test && String(warranty.bao_test) !== 'Không' ? (
+                        <div><p className="text-xs text-gray-400">Bao test</p><p className="font-medium">{String(warranty.bao_test)}</p></div>
+                      ) : null}
+                      {warranty.pin_warranty ? (
+                        <div><p className="text-xs text-gray-400">Bảo hành Pin</p><p className="font-medium">{String(warranty.pin_warranty)}</p></div>
+                      ) : null}
                     </div>
 
                     {/* Warranty claims */}
@@ -235,8 +242,9 @@ export default function OrderTrackingPage() {
                           {item.seri && <p className="text-xs text-gray-400 mt-1 font-mono">Seri: {item.seri}</p>}
                           {(item.bao_test || item.warranty_months > 0 || item.pin_warranty) && (
                             <div className="flex flex-wrap gap-2 mt-1.5">
-                              {item.bao_test && <span className="inline-flex items-center text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded">Bao test: {item.bao_test}</span>}
+                              {item.bao_test && item.bao_test !== 'Không' && <span className="inline-flex items-center text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded">Bao test: {item.bao_test}</span>}
                               {item.warranty_months > 0 && <span className="inline-flex items-center text-[11px] bg-green-50 text-green-600 px-2 py-0.5 rounded">BH: {item.warranty_months} tháng</span>}
+                              {item.warranty_end && <span className="inline-flex items-center text-[11px] bg-green-50 text-green-600 px-2 py-0.5 rounded">Đến: {formatDate(item.warranty_end)}</span>}
                               {item.pin_warranty && <span className="inline-flex items-center text-[11px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded">BH Pin: {item.pin_warranty}</span>}
                             </div>
                           )}

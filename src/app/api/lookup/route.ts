@@ -110,9 +110,25 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (w) {
+      // Fetch bao_test & pin_warranty from order_items by same seri
+      let baoTest: string | null = null;
+      let pinWarranty: string | null = null;
+      const { data: orderItem } = await admin
+        .from("order_items")
+        .select("bao_test, pin_warranty")
+        .eq("seri", q)
+        .limit(1)
+        .maybeSingle();
+      if (orderItem) {
+        baoTest = orderItem.bao_test;
+        pinWarranty = orderItem.pin_warranty;
+      }
+
       warranty = {
         ...w,
         customer_phone: maskPhone(w.customer_phone),
+        bao_test: baoTest,
+        pin_warranty: pinWarranty,
       };
       const { data: claims } = await admin
         .from("warranty_claims")
@@ -162,23 +178,34 @@ export async function POST(request: NextRequest) {
     }
 
     if (rawOrder) {
+      const saleDate = rawOrder.sale_date || rawOrder.created_at;
       cleanAdminOrder = {
         id: rawOrder.id,
         customer_name: rawOrder.customer_name,
         customer_phone: maskPhone(rawOrder.customer_phone),
         status: rawOrder.status,
-        sale_date: rawOrder.sale_date || rawOrder.created_at,
-        items: ((rawOrder as Record<string, unknown>).order_items as Record<string, unknown>[] || []).map((item: Record<string, unknown>) => ({
-          seri: item.seri,
-          product_name: item.product_name,
-          product_type: item.product_type,
-          warranty_months: item.warranty_months,
-          bao_test: item.bao_test,
-          pin_warranty: item.pin_warranty,
-          condition: item.condition,
-          capacity: item.capacity,
-          color: item.color,
-        })),
+        sale_date: saleDate,
+        items: ((rawOrder as Record<string, unknown>).order_items as Record<string, unknown>[] || []).map((item: Record<string, unknown>) => {
+          // Calculate warranty_end from sale_date + warranty_months
+          let warrantyEnd: string | null = null;
+          if (saleDate && typeof item.warranty_months === "number" && item.warranty_months > 0) {
+            const d = new Date(saleDate as string);
+            d.setMonth(d.getMonth() + item.warranty_months);
+            warrantyEnd = d.toISOString();
+          }
+          return {
+            seri: item.seri,
+            product_name: item.product_name,
+            product_type: item.product_type,
+            warranty_months: item.warranty_months,
+            warranty_end: warrantyEnd,
+            bao_test: item.bao_test,
+            pin_warranty: item.pin_warranty,
+            condition: item.condition,
+            capacity: item.capacity,
+            color: item.color,
+          };
+        }),
       };
     }
   }
