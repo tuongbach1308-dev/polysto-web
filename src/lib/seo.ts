@@ -296,7 +296,8 @@ export function buildCategoryMetadata(opts: { category: Category; url: string })
 export function buildPostMetadata(opts: { post: Post; url: string }): Metadata {
   const { post, url } = opts;
   const title = post.meta_title || post.title;
-  const description = post.meta_description || post.excerpt || post.title;
+  const autoExcerpt = post.content ? post.content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().slice(0, 160) : "";
+  const description = post.meta_description || post.excerpt || autoExcerpt || post.title;
   const image = post.og_image || post.thumbnail || DEFAULT_OG_IMAGE;
 
   return {
