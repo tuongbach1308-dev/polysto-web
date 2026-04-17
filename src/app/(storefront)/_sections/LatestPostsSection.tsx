@@ -53,11 +53,10 @@ export default async function LatestPostsSection() {
                   <h3 className="text-white text-sm font-bold leading-tight line-clamp-2 group-hover:text-brand-300 transition-colors">
                     {post.title as string}
                   </h3>
-                  {(post.excerpt as string) && (
-                    <p className="text-white/60 text-xs mt-1 line-clamp-2 leading-relaxed">
-                      {(post.excerpt as string).substring(0, 100)}...
-                    </p>
-                  )}
+                  {(() => {
+                    const desc = (post.excerpt as string) || ((post.content as string) ? (post.content as string).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().substring(0, 100) : "");
+                    return desc ? <p className="text-white/60 text-xs mt-1 line-clamp-2 leading-relaxed">{desc}...</p> : null;
+                  })()}
                 </div>
               </div>
             </Link>
