@@ -12,7 +12,7 @@ import { buildArticleJsonLd, buildBreadcrumbJsonLd, buildPostMetadata } from "@/
 import type { Post } from "@/lib/database.types";
 export const revalidate = 60;
 
-interface PostCategory { id: string; name: string; slug: string; description: string | null; parent_id: string | null; sort_order: number }
+interface PostCategory { id: string; name: string; slug: string; description: string | null; parent_id: string | null; sort_order: number; meta_title: string | null; meta_description: string | null }
 type PostRow = Record<string, unknown>;
 const POST_FIELDS = "id, title, slug, thumbnail, excerpt, created_at, view_count, reading_time, tags";
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug?: st
   if (post) return buildPostMetadata({ post: post as Post, url: `/tin-tuc/${slugPath.join("/")}` });
 
   const cat = await resolveCategory(slugPath[0]);
-  if (cat) return { title: `${cat.name} - Góc Công Nghệ`, description: cat.description || `Bài viết về ${cat.name} tại POLY Store`, alternates: { canonical: `/tin-tuc/${slugPath.join("/")}` } };
+  if (cat) return { title: cat.meta_title || `${cat.name} - Góc Công Nghệ`, description: cat.meta_description || cat.description || `Bài viết về ${cat.name} tại POLY Store`, alternates: { canonical: `/tin-tuc/${slugPath.join("/")}` } };
   return { title: "Tin tức" };
 }
 
