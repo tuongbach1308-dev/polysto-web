@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ServiceBadges from "@/components/ServiceBadges";
-import CustomerGallery from "@/components/CustomerGallery";
+import CustomerGallerySection from "./_sections/CustomerGallerySection";
 import HeroSection from "./_sections/HeroSection";
 import PromoBannerSection from "./_sections/PromoBannerSection";
 import HotSaleSection from "./_sections/HotSaleSection";
@@ -116,8 +116,10 @@ export default async function HomePage() {
         <CategorySectionsGroup group={2} />
       </Suspense>
 
-      {/* ── Customer gallery — static ── */}
-      <CustomerGallery />
+      {/* ── Customer gallery — fetches from site_settings ── */}
+      <Suspense>
+        <CustomerGallerySection />
+      </Suspense>
 
       {/* ── Latest posts — streams independently ── */}
       <Suspense fallback={<PostsSkeleton />}>

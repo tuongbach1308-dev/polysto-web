@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 
-const PHOTOS = Array.from({ length: 10 }, (_, i) => ({
-  id: i,
-  alt: `Khách hàng ${i + 1}`,
-}));
+interface CustomerPhoto {
+  url: string;
+  alt: string;
+}
 
-export default function CustomerGallery() {
+export default function CustomerGallery({ images }: { images?: CustomerPhoto[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,6 +29,15 @@ export default function CustomerGallery() {
     return () => cancelAnimationFrame(animId);
   }, []);
 
+  const hasImages = images && images.length > 0;
+
+  // Need at least a few items for seamless loop — duplicate if less than 6
+  const displayImages = hasImages
+    ? images.length < 6 ? [...images, ...images, ...images] : [...images, ...images]
+    : [];
+
+  if (!hasImages) return null;
+
   return (
     <section className="py-6 bg-white">
       <div className="max-w-[1200px] mx-auto px-4">
@@ -35,26 +45,24 @@ export default function CustomerGallery() {
           Cảm ơn khách hàng đã tin tưởng POLY Store
         </h2>
 
-        {/* Auto-scroll strip — contained within max-w */}
         <div
           ref={scrollRef}
           className="overflow-hidden rounded-lg"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <div className="inline-flex gap-2" style={{ WebkitOverflowScrolling: "touch" }}>
-            {[...PHOTOS, ...PHOTOS].map((photo, i) => (
+            {displayImages.map((photo, i) => (
               <div
                 key={i}
-                className="w-[220px] h-[160px] flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden"
+                className="w-[220px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden relative bg-gray-100"
               >
-                <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-gray-100 to-gray-50">
-                  <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] text-gray-400">{photo.alt}</span>
-                </div>
+                <Image
+                  src={photo.url}
+                  alt={photo.alt || `Khách hàng ${(i % (images?.length || 1)) + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="220px"
+                />
               </div>
             ))}
           </div>
