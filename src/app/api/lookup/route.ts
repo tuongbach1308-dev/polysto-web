@@ -2,14 +2,15 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * GET /api/lookup?q=<phone|order_number|seri>
+ * POST /api/lookup
+ * Body: { q: string }
  *
- * Searches across:
- * 1. Website orders (polysto-web DB) — by order_number or customer_phone
- * 2. Admin warranty (polysto-app DB) — by seri
- * 3. Admin orders (polysto-app DB) — by customer_phone or seri in order_items
- *
- * Returns: { webOrder, warranty, adminOrder }
+ * Security:
+ * - POST to avoid logging sensitive data in URL
+ * - Rate limited (10 req/min per IP)
+ * - Input validated (min 4 chars, alphanumeric + space/dash)
+ * - Sensitive fields stripped (cost_price, sell_price, admin_notes)
+ * - Phone numbers partially masked in response
  */
 
 const webSupabase = createClient(
@@ -24,50 +25,115 @@ function getAdminSupabase() {
   return createClient(url, key);
 }
 
-export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get("q")?.trim();
-  if (!q) return NextResponse.json({ error: "Missing query" }, { status: 400 });
+// ── Rate limiting (in-memory, per IP, 10 req/min) ──
+const rateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= 10) return false;
+  entry.count++;
+  return true;
+}
+
+// Clean up stale entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateMap) {
+    if (now > entry.resetAt) rateMap.delete(ip);
+  }
+}, 300_000);
+
+/** Mask phone: 0815242433 → 0815***433 */
+function maskPhone(phone: string | null | undefined): string {
+  if (!phone) return "";
+  const clean = phone.replace(/\s/g, "");
+  if (clean.length < 7) return "***";
+  return clean.slice(0, 4) + "***" + clean.slice(-3);
+}
+
+/** Validate input: min 4 chars, only alphanumeric + space/dash/plus */
+function isValidQuery(q: string): boolean {
+  if (q.length < 4 || q.length > 50) return false;
+  return /^[a-zA-Z0-9\s\-+]+$/.test(q);
+}
+
+export async function POST(request: NextRequest) {
+  // Rate limit
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: "Quá nhiều yêu cầu, vui lòng thử lại sau." }, { status: 429 });
+  }
+
+  // Parse body
+  let q: string;
+  try {
+    const body = await request.json();
+    q = String(body.q || "").trim();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // Validate
+  if (!q || !isValidQuery(q)) {
+    return NextResponse.json({ error: "Vui lòng nhập ít nhất 4 ký tự." }, { status: 400 });
+  }
 
   const admin = getAdminSupabase();
 
-  // Search website orders
-  const { data: webOrder } = await webSupabase
+  // ── Search website orders (safe fields only) ──
+  const { data: rawWebOrder } = await webSupabase
     .from("orders")
-    .select("*")
+    .select("order_number, customer_name, customer_phone, customer_address, items, subtotal, shipping_fee, total, status, payment_method, created_at")
     .or(`order_number.eq.${q},customer_phone.eq.${q}`)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  // Search admin warranty by seri
+  const webOrder = rawWebOrder ? {
+    ...rawWebOrder,
+    customer_phone: maskPhone(rawWebOrder.customer_phone),
+  } : null;
+
+  // ── Search admin warranty by seri ──
   let warranty = null;
-  let warrantyClaims: unknown[] = [];
+  let warrantyClaims: Record<string, unknown>[] = [];
   if (admin) {
     const { data: w } = await admin
       .from("warranty")
-      .select("id, seri, product_name, product_type, customer_name, customer_phone, warranty_months, warranty_end, status, sale_date, sell_price")
+      .select("id, seri, product_name, product_type, customer_name, customer_phone, warranty_months, warranty_end, status, sale_date")
       .eq("seri", q)
       .maybeSingle();
 
     if (w) {
-      warranty = w;
-      // Fetch claims for this warranty
+      warranty = {
+        ...w,
+        customer_phone: maskPhone(w.customer_phone),
+      };
       const { data: claims } = await admin
         .from("warranty_claims")
-        .select("id, claim_number, claim_date, claim_issue, claim_solution, claim_status, completed_at")
+        .select("claim_number, claim_date, claim_issue, claim_solution, claim_status, completed_at")
         .eq("warranty_id", w.id)
         .order("claim_date", { ascending: false });
-      warrantyClaims = claims || [];
+      warrantyClaims = (claims || []) as Record<string, unknown>[];
     }
   }
 
-  // Search admin orders by phone or seri (if no warranty found by seri, try order_items)
-  let adminOrder = null;
+  // ── Search admin orders by phone or seri ──
+  let cleanAdminOrder = null;
   if (admin && !warranty) {
+    const adminOrderFields = "id, customer_name, customer_phone, status, sale_date, created_at, order_items(seri, product_name, product_type, warranty_months, condition, capacity, color)";
+
+    let rawOrder = null;
+
     // Try by phone
     const { data: orderByPhone } = await admin
       .from("orders")
-      .select("id, customer_name, customer_phone, status, total_amount, sale_date, created_at, order_items(id, seri, product_name, product_type, sell_price, warranty_months, condition, capacity, color)")
+      .select(adminOrderFields)
       .eq("customer_phone", q)
       .eq("status", "completed")
       .order("created_at", { ascending: false })
@@ -75,12 +141,12 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (orderByPhone) {
-      adminOrder = orderByPhone;
+      rawOrder = orderByPhone;
     } else {
       // Try by seri in order_items
       const { data: itemBySeri } = await admin
         .from("order_items")
-        .select("order_id, seri, product_name, product_type, sell_price, warranty_months, condition, capacity, color")
+        .select("order_id")
         .eq("seri", q)
         .limit(1)
         .maybeSingle();
@@ -88,39 +154,36 @@ export async function GET(request: NextRequest) {
       if (itemBySeri) {
         const { data: order } = await admin
           .from("orders")
-          .select("id, customer_name, customer_phone, status, total_amount, sale_date, created_at, order_items(id, seri, product_name, product_type, sell_price, warranty_months, condition, capacity, color)")
+          .select(adminOrderFields)
           .eq("id", itemBySeri.order_id)
           .maybeSingle();
-        if (order) adminOrder = order;
+        if (order) rawOrder = order;
       }
+    }
+
+    if (rawOrder) {
+      cleanAdminOrder = {
+        id: rawOrder.id,
+        customer_name: rawOrder.customer_name,
+        customer_phone: maskPhone(rawOrder.customer_phone),
+        status: rawOrder.status,
+        sale_date: rawOrder.sale_date || rawOrder.created_at,
+        items: ((rawOrder as Record<string, unknown>).order_items as Record<string, unknown>[] || []).map((item: Record<string, unknown>) => ({
+          seri: item.seri,
+          product_name: item.product_name,
+          product_type: item.product_type,
+          warranty_months: item.warranty_months,
+          condition: item.condition,
+          capacity: item.capacity,
+          color: item.color,
+        })),
+      };
     }
   }
 
-  // Clean admin order data — remove sensitive fields
-  let cleanAdminOrder = null;
-  if (adminOrder) {
-    cleanAdminOrder = {
-      id: adminOrder.id,
-      customer_name: adminOrder.customer_name,
-      customer_phone: adminOrder.customer_phone,
-      status: adminOrder.status,
-      sale_date: adminOrder.sale_date || adminOrder.created_at,
-      items: ((adminOrder as Record<string, unknown>).order_items as Record<string, unknown>[] || []).map((item: Record<string, unknown>) => ({
-        seri: item.seri,
-        product_name: item.product_name,
-        product_type: item.product_type,
-        sell_price: item.sell_price,
-        warranty_months: item.warranty_months,
-        condition: item.condition,
-        capacity: item.capacity,
-        color: item.color,
-      })),
-    };
-  }
-
   return NextResponse.json({
-    webOrder: webOrder || null,
-    warranty: warranty || null,
+    webOrder,
+    warranty,
     warrantyClaims,
     adminOrder: cleanAdminOrder,
   });
