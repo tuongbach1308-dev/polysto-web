@@ -251,7 +251,10 @@ async function renderPostDetail(post: PostRow, slugPath: string[]) {
                 <span className="inline-block text-[10px] font-bold text-white bg-brand-500 px-2.5 py-0.5 rounded-md mb-3">{(post.tags as string[])[0]}</span>
               )}
               <article>
-                <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-4">{post.title as string}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-3">{post.title as string}</h1>
+                {(post.excerpt as string) && (
+                  <p className="text-[15px] text-gray-500 leading-relaxed mb-4">{post.excerpt as string}</p>
+                )}
                 <div className="flex items-center gap-3 mb-5 pb-5 border-b border-gray-100">
                   <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-brand-600 text-sm font-bold">{((post.author as string) || "P").charAt(0).toUpperCase()}</span>
